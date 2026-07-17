@@ -127,18 +127,28 @@ public class InfraStructureException : Exception
         if not os.path.exists(os.path.join(PathPadraoDomain, "Interfaces")):
             os.mkdir(os.path.join(PathPadraoDomain, "Interfaces"))
             self.CriandoClassesCS("IUserRepository", os.path.join(PathPadraoDomain, "Interfaces"), "interface")
+            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Interfaces", "IUserRepository.cs"), """
+
+namespace SwaggerLoader.Domain;
+
+public interface IUserRepository
+{
+    public Task Create(User data);
+    public Task<User> Read(Guid id);
+    public Task Patch(Guid id, User data);
+    public Task Update(Guid id, User data);
+    public Task Delete(Guid id);
+}
+""")
         if not os.path.exists(os.path.join(PathPadraoDomain, "Enums")):
             os.mkdir(os.path.join(PathPadraoDomain, "Enums"))
             self.CriandoClassesCS("OptionsStatusUsuario", os.path.join(PathPadraoDomain, "Enums"), "enum")
 
     def Criando_Solucao(self):
         caminho_sln = os.path.join(self.PathProjeto, f"{self.NomePrograma}.sln")
-        if os.path.exists(caminho_sln):
-            print("O arquivo de solução ja existe")
-            return
-
-        subprocess.run(["dotnet", "new", "sln", "-n", self.NomePrograma], cwd=self.PathProjeto)
-
+        if not os.path.exists(caminho_sln):
+            print("O arquivo de solução esta sendo criado")
+            subprocess.run(["dotnet", "new", "sln", "-n", self.NomePrograma], cwd=self.PathProjeto)
         # dotnet sln add <projeto> -- a ordem certa é "sln add", não "add sln"
         subprocess.run(["dotnet", "sln", "add", f"{self.NomePrograma}.Domain"], cwd=self.PathProjeto)
         subprocess.run(["dotnet", "sln", "add", f"{self.NomePrograma}.Application"], cwd=self.PathProjeto)
@@ -184,6 +194,13 @@ public class InfraStructureException : Exception
             ["dotnet", "add", f"{self.NomePrograma}.Tests", "reference", f"{self.NomePrograma}.Domain"],
             cwd=self.PathProjeto
         )
+        migrations = subprocess.run(["dotnet", "ef", "migrations", "add", "Initial_Project", "--startup-project", self.PathPadraoAPI], cwd=self.PathPadraoInfraStructure)
+        if migrations.returncode != 0:
+            print("Erro na criação das 'migrations', pulando processo.")
+        
+        database = subprocess.run(["dotnet", "ef", "database", "update", "--startup-project", self.PathPadraoAPI], cwd=self.PathPadraoInfraStructure)
+        if database.returncode != 0:
+            print("Erro na criação das 'database', pulando processo.")
 
     def Criando_Application(self):
         PathPadraoApplication = os.path.join(self.PathProjeto, f"{self.NomePrograma}.Application")
@@ -263,8 +280,8 @@ public interface IUserUseCase
 """)
 
     def Criando_InfraStrutura(self):
-        PathPadraoInfraStructure = os.path.join(self.PathProjeto, f"{self.NomePrograma}.InfraStructure")
-        if os.path.exists(PathPadraoInfraStructure):
+        self.PathPadraoInfraStructure = os.path.join(self.PathProjeto, f"{self.NomePrograma}.InfraStructure")
+        if os.path.exists(self.PathPadraoInfraStructure):
             print("A pasta InfraStructure ja existe")
             return
 
@@ -276,14 +293,14 @@ public interface IUserUseCase
             print("Erro ao criar o projeto InfraStructure")
             return
 
-        arquivo_padrao = os.path.join(PathPadraoInfraStructure, "Class1.cs")
+        arquivo_padrao = os.path.join(self.PathPadraoInfraStructure, "Class1.cs")
         if os.path.exists(arquivo_padrao):
             os.remove(arquivo_padrao)
 
-        if not os.path.exists(os.path.join(PathPadraoInfraStructure, "Data")):
-            os.mkdir(os.path.join(PathPadraoInfraStructure, "Data"))
-            self.CriandoClassesCS("AppDbContext", os.path.join(PathPadraoInfraStructure, "Data"))
-            self.ModificandoArquivos(os.path.join(PathPadraoInfraStructure, "Data", "AppDbContext.cs"), """
+        if not os.path.exists(os.path.join(self.PathPadraoInfraStructure, "Data")):
+            os.mkdir(os.path.join(self.PathPadraoInfraStructure, "Data"))
+            self.CriandoClassesCS("AppDbContext", os.path.join(self.PathPadraoInfraStructure, "Data"))
+            self.ModificandoArquivos(os.path.join(self.PathPadraoInfraStructure, "Data", "AppDbContext.cs"), """
 using Microsoft.EntityFrameworkCore;
 using SwaggerLoader.Domain;
 
@@ -296,10 +313,99 @@ public class AppDbContext : DbContext
 }
 
 """)
-        if not os.path.exists(os.path.join(PathPadraoInfraStructure, "Repository")):
-            os.mkdir(os.path.join(PathPadraoInfraStructure, "Repository"))
-            self.CriandoClassesCS("UserRepository", os.path.join(PathPadraoInfraStructure, "Repository"))
-        subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore", "--version", "8.0.0"], cwd=PathPadraoInfraStructure)
+        if not os.path.exists(os.path.join(self.PathPadraoInfraStructure, "Repository")):
+            os.mkdir(os.path.join(self.PathPadraoInfraStructure, "Repository"))
+            self.CriandoClassesCS("UserRepository", os.path.join(self.PathPadraoInfraStructure, "Repository"))
+            self.ModificandoArquivos(os.path.join(self.PathPadraoInfraStructure, "Repository", "UserRepository.cs"), """
+using Microsoft.EntityFrameworkCore;
+using SwaggerLoader.Application;
+using SwaggerLoader.Domain;
+
+namespace SwaggerLoader.InfraStructure;
+
+public class UserRepository : IUserRepository
+{
+    private readonly AppDbContext _db;
+    public UserRepository(AppDbContext db)
+    {
+        _db = db;
+    }
+    public async Task Create(User data)
+    {
+        try
+        {
+            var query = await _db.User.AddAsync(data);
+            await _db.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            throw new InfraStructureException($"Repository Error: {e.Message}");
+        }
+    }
+    public async Task<User> Read(Guid id)
+    {
+        try
+        {
+            var query = await _db.User.Where(x => x.ID == id).FirstOrDefaultAsync();
+            if (query == null)
+            {
+                throw new InfraStructureException("Usuario não existe, ou não encontrado");
+            }
+            return query;
+        }
+        catch (Exception e)
+        {
+            throw new InfraStructureException($"Repository Error: {e.Message}");
+        }
+    }
+    public async Task Patch(Guid id, User data)
+    {
+        var usuario = await _db.User.FindAsync(id);
+        if (usuario is null)
+            throw new InfraStructureException("Repository Error: Usuário não encontrado.");
+
+        if (!string.IsNullOrWhiteSpace(data.Nome))
+            usuario.Nome = data.Nome;
+
+        if (!string.IsNullOrWhiteSpace(data.Email))
+            usuario.Email = data.Email;
+        if (!string.IsNullOrWhiteSpace(data.Telefone))
+            usuario.Telefone = data.Telefone;
+
+        // Status é um enum (OptionsStatusUsuario), não string — não dá pra checar
+        // "vazio" do mesmo jeito. Se 0 for um valor válido do enum, isso sempre
+        // vai atualizar. Ajuste conforme o que faz sentido no seu domínio.
+
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task Update(Guid id, User data)
+    {
+        var usuario = await _db.User.FindAsync(id);
+        if (usuario is null)
+            throw new InfraStructureException("Repository Error: Usuário não encontrado.");
+
+        // Update = substituição completa, diferente do Patch
+        usuario.Nome = data.Nome;
+        usuario.Email = data.Email;
+        usuario.Telefone = data.Telefone;
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task Delete(Guid id)
+    {
+        var usuario = await _db.User.FindAsync(id);
+        if (usuario is null)
+            throw new InfraStructureException("Repository Error: Usuário não encontrado.");
+        _db.User.Remove(usuario);
+        await _db.SaveChangesAsync();
+    }
+}
+
+""")
+        subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore", "--version", "8.0.0"], cwd=self.PathPadraoInfraStructure)
+        subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Sqlite", "--version", "8.0.0"], cwd=self.PathPadraoInfraStructure)
+        subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Design", "--version", "8.0.0"], cwd=self.PathPadraoInfraStructure)
     def Criando_Tests(self):
         PathPadraoTestes = os.path.join(self.PathProjeto, f"{self.NomePrograma}.Tests")
         if os.path.exists(PathPadraoTestes):
@@ -326,8 +432,8 @@ public class AppDbContext : DbContext
             self.CriandoClassesCS("UserUseCaseTests", os.path.join(PathPadraoTestes, "Application"))
 
     def Criando_API(self):
-        PathPadraoAPI = os.path.join(self.PathProjeto, f"{self.NomePrograma}.API")
-        if os.path.exists(PathPadraoAPI):
+        self.PathPadraoAPI = os.path.join(self.PathProjeto, f"{self.NomePrograma}.API")
+        if os.path.exists(self.PathPadraoAPI):
             print("A pasta API ja existe")
             return
 
@@ -339,8 +445,10 @@ public class AppDbContext : DbContext
             print("Erro ao criar o projeto API")
             return
         
-        self.ModificandoArquivos(os.path.join(PathPadraoAPI, "Program.cs"), """
+        self.ModificandoArquivos(os.path.join(self.PathPadraoAPI, "Program.cs"), """
 using Microsoft.EntityFrameworkCore;
+using SwaggerLoader.Application;
+using SwaggerLoader.Domain;
 using SwaggerLoader.InfraStructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -350,6 +458,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserUseCase, UserUseCase>();
 
 var NomeProjeto = Environment.CurrentDirectory;
 Console.WriteLine(NomeProjeto);
@@ -372,13 +482,14 @@ app.MapControllers();
 app.UseHttpsRedirection();
 app.Run();
 """)
-        subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore", "--version", "8.0.0"], cwd=PathPadraoAPI)
-        subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Sqlite", "--version", "8.0.0"], cwd=PathPadraoAPI)
-        subprocess.run(["dotnet", "add", "package", "Microsoft.AspNetCore.Mvc"], cwd=PathPadraoAPI)
-        if not os.path.exists(os.path.join(PathPadraoAPI, "Controller")):
-            os.mkdir(os.path.join(PathPadraoAPI, "Controller"))
-            self.CriandoClassesCS("UserController", os.path.join(PathPadraoAPI, "Controller"))
-            self.ModificandoArquivos(os.path.join(PathPadraoAPI, "Program.cs"), """
+        subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore", "--version", "8.0.0"], cwd=self.PathPadraoAPI)
+        subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Design", "--version", "8.0.0"], cwd=self.PathPadraoAPI)
+        subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Sqlite", "--version", "8.0.0"], cwd=self.PathPadraoAPI)
+        subprocess.run(["dotnet", "add", "package", "Microsoft.AspNetCore.Mvc"], cwd=self.PathPadraoAPI)
+        if not os.path.exists(os.path.join(self.PathPadraoAPI, "Controller")):
+            os.mkdir(os.path.join(self.PathPadraoAPI, "Controller"))
+            self.CriandoClassesCS("UserController", os.path.join(self.PathPadraoAPI, "Controller"))
+            self.ModificandoArquivos(os.path.join(self.PathPadraoAPI, "Controller","UserController.cs"), """
 using Microsoft.AspNetCore.Mvc;
 using SwaggerLoader.Application;
 
@@ -473,19 +584,28 @@ public class UserController : ControllerBase
 """)
 
     def Criando_CONSOLE(self):
-        PathPadraoConsole = os.path.join(self.PathProjeto, f"{self.NomePrograma}.API")
+        PathPadraoConsole = os.path.join(self.PathProjeto, f"{self.NomePrograma}.Console")
         if os.path.exists(PathPadraoConsole):
-            print("A pasta API ja existe")
+            print("A pasta Console ja existe")
             return
 
         resultado = subprocess.run(
-            ["dotnet", "new", "console", "-n", f"{self.NomePrograma}.CONSOLE"],
+            ["dotnet", "new", "console", "-n", f"{self.NomePrograma}.Console"],
             cwd=self.PathProjeto
         )
         if resultado.returncode != 0:
             print("Erro ao criar o projeto API")
             return  
-        AdicionarBiblioteca = subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Sqlite"])
+        biblioteca_EntityFrameCoreSqlite = subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Sqlite"])
+        if biblioteca_EntityFrameCoreSqlite.returncode != 0:
+            print("Erro na instalação da biblioteca Microsoft.EntityFrameworkCore.Sqlite, prosseguindo para as proximas etapas.")
+        biblioteca_EntityFrameworkCore = subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore", "--version", "8.0.0"], cwd=PathPadraoConsole)
+        if biblioteca_EntityFrameworkCore.returncode != 0:
+            print("Erro na instalação da biblioteca Microsoft.EntityFrameworkCore, prosseguindo para as proximas etapas.")
+        
+        biblioteca_InjecaoDependencia = subprocess.run(["dotnet", "add", "package", "Microsoft.Extensions.DependencyInjection"], cwd=PathPadraoConsole)
+        if biblioteca_InjecaoDependencia != 0:
+            print("Erro na instalação da biblioteca Microsoft.Extensions.DependencyInjection, prosseguindo para as proximas etapas.")
 
 
 def Controle_args(args: list[str]):
@@ -494,7 +614,7 @@ def Controle_args(args: list[str]):
         print("Executando função especial")
     return
 
-def CodigoProducao():
+if __name__ == "__main__":
     if len(args) == 3:
         programa = Program(args[1], args[2])
         programa.Main()
@@ -503,8 +623,3 @@ def CodigoProducao():
         programa.Main()
     else:
         print("Mais um dia normal")
-def Teste():
-    programa = Program("SwaggerLoader", "API")
-    programa.Main()
-if __name__ == "__main__":
-    Teste()
