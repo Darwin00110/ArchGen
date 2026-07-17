@@ -164,7 +164,7 @@ Contribuições são bem-vindas. Ao propor mudança, mantenha:
 
 ## 📄 Licença
 
-*A definir.*
+*Codigo Autorizado para uso livre.*
 ---
 
 <div align="center">
