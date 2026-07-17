@@ -138,14 +138,14 @@ Sendo transparente sobre o estado real do projeto, para quem for usar ou contrib
 
 | Situação | Descrição |
 |---|---|
-| ⚠️ Namespace fixo | Os arquivos gerados para `AppDbContext` e `Program.cs` (modo API) ainda usam o namespace `SwaggerLoader` fixo no template, em vez do nome real do projeto informado na execução. Isso quebra a compilação se o projeto não se chamar `SwaggerLoader`. É o item mais urgente do roadmap. |
+| ✅ Namespace dinâmico | Os arquivos gerados já usam `NomePrograma` para compor `namespace` e `using`, reduzindo o acoplamento fixo.|
 | 🚧 Modo `CONSOLE` incompleto | Cria o projeto e adiciona os pacotes de EF Core/SQLite, mas ainda não escreve o `Program.cs` de orquestração como o modo API já faz. |
 | ⚠️ Sem validação de entrada | Nomes de projeto com espaço, caractere inválido, ou tipo diferente de `API`/`CONSOLE` não são tratados hoje. |
-| ⚠️ Erros do `dotnet` CLI | Aparecem no terminal, mas o script não interrompe a execução nem reporta de forma estruturada quando um passo falha no meio do processo. |
+| ⚠️ Erros do `dotnet` CLI | Aparecem no terminal, mas o script não interrompe a execução nem reporta de forma estruturada quando um passo falha no meio do processo, dando continuidade, facilitando a manutenção manual apos,
+a conclusão dos passos seguintes. |
 
 ## 🗺️ Roadmap
 
-- [ ] Corrigir os namespaces fixos para usar o nome real do projeto em todos os arquivos gerados
 - [ ] Completar o modo `CONSOLE` com um `Program.cs` de orquestração equivalente ao da API
 - [ ] Adicionar validação de entrada (nome, tipo, caminho) antes de iniciar qualquer criação
 - [ ] Melhorar o tratamento de erro do `dotnet` CLI, interrompendo o fluxo de forma clara quando um passo falhar
@@ -165,7 +165,6 @@ Contribuições são bem-vindas. Ao propor mudança, mantenha:
 ## 📄 Licença
 
 *A definir.*
-
 ---
 
 <div align="center">

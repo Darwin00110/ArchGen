@@ -57,88 +57,88 @@ class Program:
         if not os.path.exists(os.path.join(PathPadraoDomain, "Entities")):
             os.mkdir(os.path.join(PathPadraoDomain, "Entities"))
             self.CriandoClassesCS("User", os.path.join(PathPadraoDomain, "Entities"))
-            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Entities", "User.cs"), """
-namespace SwaggerLoader.Domain;
+            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Entities", "User.cs"), f"""
+namespace {self.NomePrograma}.Domain;
 
 public class User
-{
-    public Guid ID {get; set;}
-    public string Nome {get; set; } = string.Empty;
-    public string Email {get; set;} = string.Empty;
-    public string Telefone {get; set;} = string.Empty;
+{{
+    public Guid ID {{get; set;}}
+    public string Nome {{get; set; }} = string.Empty;
+    public string Email {{get; set;}} = string.Empty;
+    public string Telefone {{get; set;}} = string.Empty;
     public void Validate_Nome()
-    {
+    {{
         if (string.IsNullOrEmpty(Nome))
-        {
+        {{
             throw new DomainException("Nome não pode estar vazio, campo obrigatorio.");
-        }
-    }
+        }}
+    }}
     public void Validate_Email()
-    {
+    {{
         if (string.IsNullOrEmpty(Email))
-        {
+        {{
             throw new DomainException("Email não pode estar vazio, campo obrigatorio.");
-        }
+        }}
         if (!Email.Contains("@gmail.com"))
-        {
+        {{
             throw new DomainException("Formato Invalido do Email, ex: (exemplo@gmail.com)");
-        }
-    }
+        }}
+    }}
     public void Validate_Telefone()
-    {
+    {{
         if (string.IsNullOrEmpty(Telefone))
-        {
+        {{
             throw new DomainException("Telefone não pode estar vazio, campo obrigatorio.");
-        }
-    }
-}
+        }}
+    }}
+}}
 
 """)
         if not os.path.exists(os.path.join(PathPadraoDomain, "Exceptions")):
             os.mkdir(os.path.join(PathPadraoDomain, "Exceptions"))
             self.CriandoClassesCS("DomainException", os.path.join(PathPadraoDomain, "Exceptions"))
-            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Exceptions", "DomainException.cs"), """
-namespace SwaggerLoader.Domain;
+            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Exceptions", "DomainException.cs"), f"""
+namespace {self.NomePrograma}.Domain;
 
 public class DomainException : Exception
-{
-    public DomainException(string message) : base(message) {}
-}
+{{
+    public DomainException(string message) : base(message) {{}}
+}}
 """)
             self.CriandoClassesCS("ApplicationException", os.path.join(PathPadraoDomain, "Exceptions"))
-            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Exceptions", "ApplicationException.cs"), """
-namespace SwaggerLoader.Domain;
+            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Exceptions", "ApplicationException.cs"), f"""
+namespace {self.NomePrograma}.Domain;
 
 public class ApplicationException : Exception
-{
-    public ApplicationException(string message) : base(message) {}
-}
+{{
+    public ApplicationException(string message) : base(message) {{}}
+}}
 """)
             
             self.CriandoClassesCS("InfraStructureException", os.path.join(PathPadraoDomain, "Exceptions"))
-            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Exceptions", "InfraStructureException.cs"), """
-namespace SwaggerLoader.Domain;
+            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Exceptions", "InfraStructureException.cs"), f"""
+namespace {self.NomePrograma}.Domain;
 
 public class InfraStructureException : Exception
-{
-    public InfraStructureException(string message) : base(message) {}
-}
+{{
+    public InfraStructureException(string message) : base(message) {{}}
+}}
 """)
         if not os.path.exists(os.path.join(PathPadraoDomain, "Interfaces")):
             os.mkdir(os.path.join(PathPadraoDomain, "Interfaces"))
             self.CriandoClassesCS("IUserRepository", os.path.join(PathPadraoDomain, "Interfaces"), "interface")
-            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Interfaces", "IUserRepository.cs"), """
+            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Interfaces", "IUserRepository.cs"), f"""
 
-namespace SwaggerLoader.Domain;
+namespace {self.NomePrograma}.Domain;
 
 public interface IUserRepository
-{
+{{
     public Task Create(User data);
     public Task<User> Read(Guid id);
     public Task Patch(Guid id, User data);
     public Task Update(Guid id, User data);
     public Task Delete(Guid id);
-}
+}}
 """)
         if not os.path.exists(os.path.join(PathPadraoDomain, "Enums")):
             os.mkdir(os.path.join(PathPadraoDomain, "Enums"))
@@ -228,55 +228,56 @@ public interface IUserRepository
         if not os.path.exists(os.path.join(PathPadraoApplication, "UseCase")):
             os.mkdir(os.path.join(PathPadraoApplication, "UseCase"))
             self.CriandoClassesCS("UserUseCase", os.path.join(PathPadraoApplication, "UseCase"))
-            self.ModificandoArquivos(os.path.join(PathPadraoApplication, "UseCase", "UserUseCase.cs"), """
-using SwaggerLoader.Domain;
+            self.ModificandoArquivos(os.path.join(PathPadraoApplication, "UseCase", "UserUseCase.cs"), f"""
+using {self.NomePrograma}.Domain;
 
-namespace SwaggerLoader.Application;
+namespace {self.NomePrograma}.Application;
 
 public class UserUseCase : IUserUseCase
-{
+{{
     public async Task<bool> Create(CreateUserRequest request)
-    {
+    {{
 
         return false;
-    }
+    }}
     public async Task<User> ReadUser(Guid id)
-    {
+    {{
         return new User
-        {
+        {{
 
-        };
-    }
+        }};
+    }}
     public async Task<bool> UpdateUser(Guid id, UpdateUserRequest request)
-    {
+    {{
         return false;
-    }
+    }}
     public async Task<bool> PatchUser(Guid id, PatchUserRequest request)
-    {
+    {{
         return false;
 
-    }
+    }}
     public async Task<bool> DeleteUser(Guid id)
-    {
+    {{
         return false;
-    }
-}""")
+    }}
+}}""")
         if not os.path.exists(os.path.join(PathPadraoApplication, "Interfaces")):
             os.mkdir(os.path.join(PathPadraoApplication, "Interfaces"))
             self.CriandoClassesCS("IUserUseCase", os.path.join(PathPadraoApplication, "Interfaces"), "interface")
-            self.ModificandoArquivos(os.path.join(PathPadraoApplication, "Interfaces", "IUserUseCase.cs"), """
-using SwaggerLoader.Domain;
+            self.ModificandoArquivos(os.path.join(PathPadraoApplication, "Interfaces", "IUserUseCase.cs"), f"""
+using {self.NomePrograma}.Domain;
 
-namespace SwaggerLoader.Application;
+namespace {self.NomePrograma}.Application;
 
 public interface IUserUseCase
-{
+{{
     public Task<bool> Create(CreateUserRequest request);
     public Task<User> ReadUser(Guid id);
     public Task<bool> UpdateUser(Guid id, UpdateUserRequest request);
     public Task<bool> PatchUser(Guid id, PatchUserRequest request);
     public Task<bool> DeleteUser(Guid id);
-}
+}}
+
 """)
 
     def Criando_InfraStrutura(self):
@@ -300,66 +301,66 @@ public interface IUserUseCase
         if not os.path.exists(os.path.join(self.PathPadraoInfraStructure, "Data")):
             os.mkdir(os.path.join(self.PathPadraoInfraStructure, "Data"))
             self.CriandoClassesCS("AppDbContext", os.path.join(self.PathPadraoInfraStructure, "Data"))
-            self.ModificandoArquivos(os.path.join(self.PathPadraoInfraStructure, "Data", "AppDbContext.cs"), """
+            self.ModificandoArquivos(os.path.join(self.PathPadraoInfraStructure, "Data", "AppDbContext.cs"), f"""
 using Microsoft.EntityFrameworkCore;
-using SwaggerLoader.Domain;
+using {self.NomePrograma}.Domain;
 
-namespace SwaggerLoader.InfraStructure;
+namespace {self.NomePrograma}.InfraStructure;
 
 public class AppDbContext : DbContext
-{
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options){}
-    public DbSet<User> User {get; set;}
-}
+{{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options){{}}
+    public DbSet<User> User {{get; set;}}
+}}
 
 """)
         if not os.path.exists(os.path.join(self.PathPadraoInfraStructure, "Repository")):
             os.mkdir(os.path.join(self.PathPadraoInfraStructure, "Repository"))
             self.CriandoClassesCS("UserRepository", os.path.join(self.PathPadraoInfraStructure, "Repository"))
-            self.ModificandoArquivos(os.path.join(self.PathPadraoInfraStructure, "Repository", "UserRepository.cs"), """
+            self.ModificandoArquivos(os.path.join(self.PathPadraoInfraStructure, "Repository", "UserRepository.cs"), f"""
 using Microsoft.EntityFrameworkCore;
-using SwaggerLoader.Application;
-using SwaggerLoader.Domain;
+using {self.NomePrograma}.Application;
+using {self.NomePrograma}.Domain;
 
-namespace SwaggerLoader.InfraStructure;
+namespace {self.NomePrograma}.InfraStructure;
 
 public class UserRepository : IUserRepository
-{
+{{
     private readonly AppDbContext _db;
     public UserRepository(AppDbContext db)
-    {
+    {{
         _db = db;
-    }
+    }}
     public async Task Create(User data)
-    {
+    {{
         try
-        {
+        {{
             var query = await _db.User.AddAsync(data);
             await _db.SaveChangesAsync();
-        }
+        }}
         catch (Exception e)
-        {
-            throw new InfraStructureException($"Repository Error: {e.Message}");
-        }
-    }
+        {{
+            throw new InfraStructureException($"Repository Error: {{e.Message}}");
+        }}
+    }}
     public async Task<User> Read(Guid id)
-    {
+    {{
         try
-        {
+        {{
             var query = await _db.User.Where(x => x.ID == id).FirstOrDefaultAsync();
             if (query == null)
-            {
+            {{
                 throw new InfraStructureException("Usuario não existe, ou não encontrado");
-            }
+            }}
             return query;
-        }
+        }}
         catch (Exception e)
-        {
-            throw new InfraStructureException($"Repository Error: {e.Message}");
-        }
-    }
+        {{
+            throw new InfraStructureException($"Repository Error: {{e.Message}}");
+        }}
+    }}
     public async Task Patch(Guid id, User data)
-    {
+    {{
         var usuario = await _db.User.FindAsync(id);
         if (usuario is null)
             throw new InfraStructureException("Repository Error: Usuário não encontrado.");
@@ -377,10 +378,10 @@ public class UserRepository : IUserRepository
         // vai atualizar. Ajuste conforme o que faz sentido no seu domínio.
 
         await _db.SaveChangesAsync();
-    }
+    }}
 
     public async Task Update(Guid id, User data)
-    {
+    {{
         var usuario = await _db.User.FindAsync(id);
         if (usuario is null)
             throw new InfraStructureException("Repository Error: Usuário não encontrado.");
@@ -390,17 +391,17 @@ public class UserRepository : IUserRepository
         usuario.Email = data.Email;
         usuario.Telefone = data.Telefone;
         await _db.SaveChangesAsync();
-    }
+    }}
 
     public async Task Delete(Guid id)
-    {
+    {{
         var usuario = await _db.User.FindAsync(id);
         if (usuario is null)
             throw new InfraStructureException("Repository Error: Usuário não encontrado.");
         _db.User.Remove(usuario);
         await _db.SaveChangesAsync();
-    }
-}
+    }}
+}}
 
 """)
         subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore", "--version", "8.0.0"], cwd=self.PathPadraoInfraStructure)
@@ -445,11 +446,11 @@ public class UserRepository : IUserRepository
             print("Erro ao criar o projeto API")
             return
         
-        self.ModificandoArquivos(os.path.join(self.PathPadraoAPI, "Program.cs"), """
+        self.ModificandoArquivos(os.path.join(self.PathPadraoAPI, "Program.cs"), f"""
 using Microsoft.EntityFrameworkCore;
-using SwaggerLoader.Application;
-using SwaggerLoader.Domain;
-using SwaggerLoader.InfraStructure;
+using {self.NomePrograma}.Application;
+using {self.NomePrograma}.Domain;
+using {self.NomePrograma}.InfraStructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -464,19 +465,19 @@ builder.Services.AddScoped<IUserUseCase, UserUseCase>();
 var NomeProjeto = Environment.CurrentDirectory;
 Console.WriteLine(NomeProjeto);
 
-var PathBanco = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", "SwaggerLoader.InfraStructure", "Data", "database.db"));
+var PathBanco = Path.Combine(@"{self.PathPadraoInfraStructure}", "Data", "database.db");
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseSqlite($"Data Source={PathBanco}");
-});
+{{
+    options.UseSqlite($"Data Source={{PathBanco}}");
+}});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
+{{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+}}
 
 app.MapControllers();
 app.UseHttpsRedirection();
@@ -489,97 +490,97 @@ app.Run();
         if not os.path.exists(os.path.join(self.PathPadraoAPI, "Controller")):
             os.mkdir(os.path.join(self.PathPadraoAPI, "Controller"))
             self.CriandoClassesCS("UserController", os.path.join(self.PathPadraoAPI, "Controller"))
-            self.ModificandoArquivos(os.path.join(self.PathPadraoAPI, "Controller","UserController.cs"), """
+            self.ModificandoArquivos(os.path.join(self.PathPadraoAPI, "Controller","UserController.cs"), f"""
 using Microsoft.AspNetCore.Mvc;
-using SwaggerLoader.Application;
+using {self.NomePrograma}.Application;
 
-namespace SwaggerLoader.API;
+namespace {self.NomePrograma}.API;
 
 [ApiController]
 [Route("users")]
 public class UserController : ControllerBase
-{
+{{
     private readonly IUserUseCase _usecase;
     public UserController(IUserUseCase usecase)
-    {
+    {{
         _usecase = usecase;
-    }
+    }}
     [HttpPost("register")]
     public async Task<IActionResult> Create(CreateUserRequest request)
-    {
+    {{
         try
-        {
+        {{
             var result = await _usecase.Create(request);
             return Ok(new
-            {
+            {{
                 Sucess = result
-            });
-        } catch(Exception e)
-        {
-            return BadRequest(new {Error = e.Message});
-        }
-    }
+            }});
+        }} catch(Exception e)
+        {{
+            return BadRequest(new {{Error = e.Message}});
+        }}
+    }}
     [HttpGet("me")]
     public async Task<IActionResult> Read(Guid id)
-    {
+    {{
         try
-        {
+        {{
             var result = await _usecase.ReadUser(id);
             return Ok(new
-            {
+            {{
                 Data = result
-            });
-        } catch(Exception e)
-        {
-            return BadRequest(new {Error = e.Message});
-        }        
-    }
+            }});
+        }} catch(Exception e)
+        {{
+            return BadRequest(new {{Error = e.Message}});
+        }}        
+    }}
     [HttpPut("me")]
     public async Task<IActionResult> Update(Guid id, UpdateUserRequest request)
-    {
+    {{
         try
-        {
+        {{
             var result = await _usecase.UpdateUser(id, request);
             return Ok(new
-            {
+            {{
                 Sucess = result
-            });
-        } catch(Exception e)
-        {
-            return BadRequest(new {Error = e.Message});
-        }        
-    }
+            }});
+        }} catch(Exception e)
+        {{
+            return BadRequest(new {{Error = e.Message}});
+        }}       
+    }}
     [HttpPatch("me")]
     public async Task<IActionResult> Patch(Guid id, PatchUserRequest request)
-    {
+    {{
         try
-        {
+        {{
             var result = await _usecase.PatchUser(id, request);
             return Ok(new
-            {
+            {{
                 Sucess = result
-            });
-        } catch(Exception e)
-        {
-            return BadRequest(new {Error = e.Message});
-        }
-    }
+            }});
+        }} catch(Exception e)
+        {{
+            return BadRequest(new {{Error = e.Message}});
+        }}
+    }}
     [HttpDelete("me")]
     public async Task<IActionResult> Delete(Guid id)
-    {
+    {{
         try
-        {
+        {{
             var result = await _usecase.DeleteUser(id);
             return Ok(new
-            {
+            {{
                 Sucess = result
-            });
-        } catch(Exception e)
-        {
-            return BadRequest(new {Error = e.Message});
-        }
-    }
-}
+            }});
+        }} catch(Exception e)
+        {{
+            return BadRequest(new {{Error = e.Message}});
+        }}
+    }}
+}}
             
 """)
 
