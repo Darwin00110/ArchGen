@@ -1,3 +1,6 @@
+import subprocess
+import pyautogui
+
 import os
 import subprocess
 import sys
@@ -23,7 +26,7 @@ class Program:
         self.Criando_Solucao()
 
     def ModificandoArquivos(self, PathArquivo: str, Content: str):
-        with open(PathArquivo, 'w') as file:
+        with open(PathArquivo, 'w', encoding="UTF-8") as file:
             file.write(Content)
         return
 
@@ -105,13 +108,13 @@ public class DomainException : Exception
     public DomainException(string message) : base(message) {{}}
 }}
 """)
-            self.CriandoClassesCS("ApplicationException", os.path.join(PathPadraoDomain, "Exceptions"))
-            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Exceptions", "ApplicationException.cs"), f"""
+            self.CriandoClassesCS("UseCaseException", os.path.join(PathPadraoDomain, "Exceptions"))
+            self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Exceptions", "UseCaseException.cs"), f"""
 namespace {self.NomePrograma}.Domain;
 
-public class ApplicationException : Exception
+public class UseCaseException : Exception
 {{
-    public ApplicationException(string message) : base(message) {{}}
+    public UseCaseException(string message) : base(message) {{}}
 }}
 """)
             
@@ -128,11 +131,11 @@ public class InfraStructureException : Exception
             os.mkdir(os.path.join(PathPadraoDomain, "Interfaces"))
             self.CriandoClassesCS("IUserRepository", os.path.join(PathPadraoDomain, "Interfaces"), "interface")
             self.ModificandoArquivos(os.path.join(PathPadraoDomain, "Interfaces", "IUserRepository.cs"), f"""
-
 namespace {self.NomePrograma}.Domain;
-
 public interface IUserRepository
 {{
+    public Task<bool> VerifyUserExists(Guid id);
+    public Task<bool> VerifyUserExists_WithEmail(string Email);
     public Task Create(User data);
     public Task<User> Read(Guid id);
     public Task Patch(Guid id, User data);
@@ -235,6 +238,11 @@ namespace {self.NomePrograma}.Application;
 
 public class UserUseCase : IUserUseCase
 {{
+    private readonly IUserRepository _repo;
+    public UserUseCase(IUserRepository repo)
+    {{
+        _repo = repo;
+    }}
     public async Task<bool> Create(CreateUserRequest request)
     {{
 
@@ -260,7 +268,8 @@ public class UserUseCase : IUserUseCase
     {{
         return false;
     }}
-}}""")
+}}
+""")
         if not os.path.exists(os.path.join(PathPadraoApplication, "Interfaces")):
             os.mkdir(os.path.join(PathPadraoApplication, "Interfaces"))
             self.CriandoClassesCS("IUserUseCase", os.path.join(PathPadraoApplication, "Interfaces"), "interface")
@@ -321,6 +330,8 @@ public class AppDbContext : DbContext
 using Microsoft.EntityFrameworkCore;
 using {self.NomePrograma}.Application;
 using {self.NomePrograma}.Domain;
+using System.Diagnostics;
+using {self.NomePrograma}.InfraStructure;
 
 namespace {self.NomePrograma}.InfraStructure;
 
@@ -343,6 +354,22 @@ public class UserRepository : IUserRepository
             throw new InfraStructureException($"Repository Error: {{e.Message}}");
         }}
     }}
+    public async Task<bool> VerifyUserExists_WithEmail(string Email)
+    {{
+        try
+        {{
+            var query = await _db.User.Where(x => x.Email == Email).FirstOrDefaultAsync();
+            if (query == null)
+            {{
+                return false;
+            }}
+            return true;
+        }}
+        catch (Exception e)
+        {{
+            throw new InfraStructureException($"Repository Error: {{e.Message}}");
+        }}
+    }}
     public async Task<User> Read(Guid id)
     {{
         try
@@ -350,7 +377,7 @@ public class UserRepository : IUserRepository
             var query = await _db.User.Where(x => x.ID == id).FirstOrDefaultAsync();
             if (query == null)
             {{
-                throw new InfraStructureException("Usuario não existe, ou não encontrado");
+                throw new InfraStructureException("Usuario n�o existe, ou n�o encontrado");
             }}
             return query;
         }}
@@ -361,48 +388,86 @@ public class UserRepository : IUserRepository
     }}
     public async Task Patch(Guid id, User data)
     {{
-        var usuario = await _db.User.FindAsync(id);
-        if (usuario is null)
-            throw new InfraStructureException("Repository Error: Usuário não encontrado.");
+        try
+        {{
 
-        if (!string.IsNullOrWhiteSpace(data.Nome))
-            usuario.Nome = data.Nome;
+            var usuario = await _db.User.FindAsync(id);
+            if (usuario is null)
+                throw new InfraStructureException("Repository Error: Usu�rio n�o encontrado.");
 
-        if (!string.IsNullOrWhiteSpace(data.Email))
-            usuario.Email = data.Email;
-        if (!string.IsNullOrWhiteSpace(data.Telefone))
-            usuario.Telefone = data.Telefone;
+            if (!string.IsNullOrWhiteSpace(data.Nome))
+                usuario.Nome = data.Nome;
 
-        // Status é um enum (OptionsStatusUsuario), não string — não dá pra checar
-        // "vazio" do mesmo jeito. Se 0 for um valor válido do enum, isso sempre
-        // vai atualizar. Ajuste conforme o que faz sentido no seu domínio.
+            if (!string.IsNullOrWhiteSpace(data.Email))
+                usuario.Email = data.Email;
+            if (!string.IsNullOrWhiteSpace(data.Telefone))
+                usuario.Telefone = data.Telefone;
 
-        await _db.SaveChangesAsync();
+            // Status � um enum (OptionsStatusUsuario), n�o string � n�o d� pra checar
+            // "vazio" do mesmo jeito. Se 0 for um valor v�lido do enum, isso sempre
+            // vai atualizar. Ajuste conforme o que faz sentido no seu dom�nio.
+
+            await _db.SaveChangesAsync();
+        }}
+        catch (Exception e)
+        {{
+            throw new InfraStructureException($"Repository Error: {{e.Message}}");
+        }}
     }}
 
     public async Task Update(Guid id, User data)
     {{
-        var usuario = await _db.User.FindAsync(id);
-        if (usuario is null)
-            throw new InfraStructureException("Repository Error: Usuário não encontrado.");
+        try
+        {{
 
-        // Update = substituição completa, diferente do Patch
-        usuario.Nome = data.Nome;
-        usuario.Email = data.Email;
-        usuario.Telefone = data.Telefone;
-        await _db.SaveChangesAsync();
+            var usuario = await _db.User.FindAsync(id);
+            if (usuario is null)
+                throw new InfraStructureException("Repository Error: Usu�rio n�o encontrado.");
+
+            // Update = substitui��o completa, diferente do Patch
+            usuario.Nome = data.Nome;
+            usuario.Email = data.Email;
+            usuario.Telefone = data.Telefone;
+            await _db.SaveChangesAsync();
+        }}
+        catch (Exception e)
+        {{
+            throw new InfraStructureException($"Repository Error: {{e.Message}}");
+        }}
     }}
 
     public async Task Delete(Guid id)
     {{
-        var usuario = await _db.User.FindAsync(id);
-        if (usuario is null)
-            throw new InfraStructureException("Repository Error: Usuário não encontrado.");
-        _db.User.Remove(usuario);
-        await _db.SaveChangesAsync();
+        try
+        {{
+            var usuario = await _db.User.FindAsync(id);
+            if (usuario is null)
+                throw new InfraStructureException("Repository Error: Usu�rio n�o encontrado.");
+            _db.User.Remove(usuario);
+            await _db.SaveChangesAsync();
+        }}
+        catch (Exception e)
+        {{
+            throw new InfraStructureException($"Repository Error: {{e.Message}}");
+        }}
+    }}
+    public async Task<bool> VerifyUserExists(Guid id)
+    {{
+        try
+        {{
+            var query = await _db.User.Where(x => x.ID == id).FirstOrDefaultAsync();
+            if (query == null)
+            {{
+                return false;
+            }}
+            return true;
+        }}
+        catch (Exception e)
+        {{
+            throw new InfraStructureException($"Repository Error: {{e.Message}}");
+        }}
     }}
 }}
-
 """)
         subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore", "--version", "8.0.0"], cwd=self.PathPadraoInfraStructure)
         subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Sqlite", "--version", "8.0.0"], cwd=self.PathPadraoInfraStructure)
@@ -608,12 +673,6 @@ public class UserController : ControllerBase
         if biblioteca_InjecaoDependencia != 0:
             print("Erro na instalação da biblioteca Microsoft.Extensions.DependencyInjection, prosseguindo para as proximas etapas.")
 
-
-def Controle_args(args: list[str]):
-    args[1] = args[1].upper()
-    if args[1] in ("-N", "--N", "--NAME", "-NAME"):
-        print("Executando função especial")
-    return
 
 if __name__ == "__main__":
     if len(args) == 3:
