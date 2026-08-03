@@ -4,7 +4,7 @@ import pyautogui
 import os
 import subprocess
 import sys
-
+import shutil
 args = sys.argv
 
 
@@ -152,7 +152,10 @@ public interface IUserRepository
         if not os.path.exists(caminho_sln):
             print("O arquivo de solução esta sendo criado")
             subprocess.run(["dotnet", "new", "sln", "-n", self.NomePrograma], cwd=self.PathProjeto)
-        # dotnet sln add <projeto> -- a ordem certa é "sln add", não "add sln"
+        if self.TipoPrograma == "API":
+            pathPadraoSlnUso = self.PathPadraoAPI
+        else:
+            pathPadraoSlnUso = self.PathPadraoConsole        
         subprocess.run(["dotnet", "sln", "add", f"{self.NomePrograma}.Domain"], cwd=self.PathProjeto)
         subprocess.run(["dotnet", "sln", "add", f"{self.NomePrograma}.Application"], cwd=self.PathProjeto)
         subprocess.run(["dotnet", "sln", "add", f"{self.NomePrograma}.InfraStructure"], cwd=self.PathProjeto)
@@ -173,7 +176,19 @@ public interface IUserRepository
                 cwd=self.PathProjeto
             )
         elif self.TipoPrograma == "CONSOLE":
-            print("em producao")
+            subprocess.run(["dotnet", "sln", "add", f"{self.NomePrograma}.Console"], cwd=self.PathProjeto)
+            subprocess.run(
+                ["dotnet", "add", f"{self.NomePrograma}.Console", "reference", f"{self.NomePrograma}.Application"],
+                cwd=self.PathProjeto
+            )
+            subprocess.run(
+                ["dotnet", "add", f"{self.NomePrograma}.Console", "reference", f"{self.NomePrograma}.Domain"],
+                cwd=self.PathProjeto
+            )
+            subprocess.run(
+                ["dotnet", "add", f"{self.NomePrograma}.Console", "reference", f"{self.NomePrograma}.InfraStructure"],
+                cwd=self.PathProjeto
+            )
 
         subprocess.run(
             ["dotnet", "add", f"{self.NomePrograma}.Application", "reference", f"{self.NomePrograma}.Domain"],
@@ -197,11 +212,16 @@ public interface IUserRepository
             ["dotnet", "add", f"{self.NomePrograma}.Tests", "reference", f"{self.NomePrograma}.Domain"],
             cwd=self.PathProjeto
         )
-        migrations = subprocess.run(["dotnet", "ef", "migrations", "add", "Initial_Project", "--startup-project", self.PathPadraoAPI], cwd=self.PathPadraoInfraStructure)
+        if self.TipoPrograma == "API":
+            pathPadraoSlnUso = self.PathPadraoAPI
+        elif self.TipoPrograma == "CONSOLE":
+            pathPadraoSlnUso = self.PathPadraoConsole
+        
+        migrations = subprocess.run(["dotnet", "ef", "migrations", "add", "Initial_Project", "--startup-project", pathPadraoSlnUso], cwd=self.PathPadraoInfraStructure)
         if migrations.returncode != 0:
             print("Erro na criação das 'migrations', pulando processo.")
-        
-        database = subprocess.run(["dotnet", "ef", "database", "update", "--startup-project", self.PathPadraoAPI], cwd=self.PathPadraoInfraStructure)
+
+        database = subprocess.run(["dotnet", "ef", "database", "update", "--startup-project", pathPadraoSlnUso], cwd=self.PathPadraoInfraStructure)
         if database.returncode != 0:
             print("Erro na criação das 'database', pulando processo.")
 
@@ -648,10 +668,23 @@ public class UserController : ControllerBase
 }}
             
 """)
-
+    @staticmethod
+    def Instalacao_Sistema(Path = os.getcwd()):
+        ProgramaExecutavel = os.path.join(Path, "ArchGen.exe")
+        if not os.path.exists(ProgramaExecutavel):
+            print("Arquivo executavel não existe, favor instalar o programa novamente, ou execute (python ArchGen.py --install all)")
+        else:
+            PastaProgramFiles = os.path.join(os.environ["ProgramFiles"], "ArchGen")
+            if not os.path.exists(PastaProgramFiles):
+                print("Criando pasta do ArchGen")
+                os.mkdir(PastaProgramFiles)
+            if not os.path.exists(os.path.join(PastaProgramFiles, "ArchGen.exe")):
+                print("Movendo executavel do ArchGen")
+                shutil.move(ProgramaExecutavel, PastaProgramFiles)
+            
     def Criando_CONSOLE(self):
-        PathPadraoConsole = os.path.join(self.PathProjeto, f"{self.NomePrograma}.Console")
-        if os.path.exists(PathPadraoConsole):
+        self.PathPadraoConsole = os.path.join(self.PathProjeto, f"{self.NomePrograma}.Console")
+        if os.path.exists(self.PathPadraoConsole):
             print("A pasta Console ja existe")
             return
 
@@ -660,26 +693,82 @@ public class UserController : ControllerBase
             cwd=self.PathProjeto
         )
         if resultado.returncode != 0:
-            print("Erro ao criar o projeto API")
+            print("Erro ao criar o projeto Console")
             return  
-        biblioteca_EntityFrameCoreSqlite = subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Sqlite"])
+        biblioteca_EntityFrameCoreSqlite = subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Sqlite", "--version", "8.0.0"], cwd=self.PathPadraoConsole)
         if biblioteca_EntityFrameCoreSqlite.returncode != 0:
             print("Erro na instalação da biblioteca Microsoft.EntityFrameworkCore.Sqlite, prosseguindo para as proximas etapas.")
-        biblioteca_EntityFrameworkCore = subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore", "--version", "8.0.0"], cwd=PathPadraoConsole)
+
+        biblioteca_EntityFrameCoreSqliteDesing = subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore.Design", "--version", "8.0.0"], cwd=self.PathPadraoConsole)
+        if biblioteca_EntityFrameCoreSqliteDesing.returncode != 0:
+            print("Erro na instalação da biblioteca Microsoft.EntityFrameworkCore.Design, prosseguindo para as proximas etapas.")
+        biblioteca_EntityFrameworkCore = subprocess.run(["dotnet", "add", "package", "Microsoft.EntityFrameworkCore", "--version", "8.0.0"], cwd=self.PathPadraoConsole)
         if biblioteca_EntityFrameworkCore.returncode != 0:
             print("Erro na instalação da biblioteca Microsoft.EntityFrameworkCore, prosseguindo para as proximas etapas.")
         
-        biblioteca_InjecaoDependencia = subprocess.run(["dotnet", "add", "package", "Microsoft.Extensions.DependencyInjection"], cwd=PathPadraoConsole)
-        if biblioteca_InjecaoDependencia != 0:
+        biblioteca_InjecaoDependencia = subprocess.run(["dotnet", "add", "package", "Microsoft.Extensions.DependencyInjection"], cwd=self.PathPadraoConsole)
+        if biblioteca_InjecaoDependencia.returncode != 0:
             print("Erro na instalação da biblioteca Microsoft.Extensions.DependencyInjection, prosseguindo para as proximas etapas.")
+        
+        biblioteca_InjecaoDependenciaHost = subprocess.run(["dotnet", "add", "package", "Microsoft.Extensions.Hosting", "--version", "8.0.0"], cwd=self.PathPadraoConsole)
+        if biblioteca_InjecaoDependenciaHost.returncode != 0:
+            print("Erro na instalação da biblioteca  Microsoft.Extensions.Hosting, prosseguindo para as proximas etapas.")
+        pathProgram = os.path.join(self.PathPadraoConsole, "Program.cs")
+        self.ModificandoArquivos(pathProgram, """
+using System.CommandLine;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
+var builder = Host.CreateApplicationBuilder(args);
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=aquiles.db"));
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserUseCase, UserUseCase>();
+
+var app = builder.Build();
+
+var rootCommand = new RootCommand("Aquiles CLI");
+
+// ---- comando: aquiles user create --nome "Darwin" --email x@gmail.com ----
+var userCommand = new Command("user", "Gerencia usuários");
+var createCommand = new Command("create", "Cria um novo usuário");
+
+var nomeOption = new Option<string>("--nome") { IsRequired = true };
+var emailOption = new Option<string>("--email") { IsRequired = true };
+
+createCommand.AddOption(nomeOption);
+createCommand.AddOption(emailOption);
+
+createCommand.SetHandler(async (nome, email) =>
+{
+    using var scope = app.Services.CreateScope();
+    var useCase = scope.ServiceProvider.GetRequiredService<IUserUseCase>();
+
+    try
+    {
+        var result = await useCase.Create(new CreateUserRequest { Nome = nome, Email = email });
+        Console.WriteLine(result ? "Usuário criado com sucesso." : "Falha ao criar usuário.");
+    }
+    catch (DomainException ex)
+    {
+        Console.WriteLine($"Erro: {ex.Message}");
+    }
+}, nomeOption, emailOption);
+
+userCommand.AddCommand(createCommand);
+rootCommand.AddCommand(userCommand);
+
+return await rootCommand.InvokeAsync(args);
+""")
 if __name__ == "__main__":
     if len(args) == 3:
         programa = Program(args[1], args[2])
         programa.Main()
-    elif len(args) >= 4:
-        programa = Program(args[1], args[2], args[3])
-        programa.Main()
+        if len(args) >= 4:
+            programa = Program(args[1], args[2], args[3])
+            programa.Main()
+        else:
+            print("Path não foi passado, usando o path atual da execução do programa.")
     else:
-        print("Mais um dia normal")
+        print("INFO")
