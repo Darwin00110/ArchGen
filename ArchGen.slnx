@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ArchGen.Application/ArchGen.Application.csproj" />
+  <Project Path="ArchGen.Console/ArchGen.Console.csproj" />
+  <Project Path="ArchGen.Domain/ArchGen.Domain.csproj" />
+  <Project Path="ArchGen.Infrastructure/ArchGen.Infrastructure.csproj" />
+  <Project Path="ArchGen.Tests/ArchGen.Tests.csproj" />
+</Solution>
