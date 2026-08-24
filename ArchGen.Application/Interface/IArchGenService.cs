@@ -2,15 +2,12 @@
 
 public interface IArchGenService
 {
-    public Task VerifyDomainFiles();
-    public Task VerifyApplicationFiles();
-    public Task VerifyInfrastructureFiles();
-    public Task VerifyTestsFiles();
-    public Task VerifySoluctionFiles();
+    public Task<bool> VerifySoluctionFiles();
     public void SetConfiguracaoDoProjeto(string nomeDoProjeto, string TipoProjeto);
-    public Task VerifyInternDomainFiles();
-    public Task VerifyInternApplicationFiles();
-    public Task VerifyInternInfrastructureFiles();
-    public Task VerifyInternTestsFiles();
+    public Task<bool> VerifyInternTestsFiles();
+    public Task<bool> VerifyInternConsoleFiles();
+    public Task<bool> VerifyInternAPIFiles();
+    public Task<bool> VerifyInternStructure_Diretory();
+    public Task<bool> ExecInternStructure();
 }
 

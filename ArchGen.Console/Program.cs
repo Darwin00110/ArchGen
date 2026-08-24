@@ -12,6 +12,11 @@ builder.Services.AddDbContext<AppDbContext>(e =>
 });
 builder.Services.AddScoped<IArchGenRepository, ArchGenRepository>();
 builder.Services.AddScoped<IArchGenService, ArchGenService>();
+builder.Services.AddScoped<IDotnetService, DotnetService>();
+builder.Services.AddScoped<InternDomainGenerationService>();
+builder.Services.AddScoped<InternApplicationGenerationService>();
+builder.Services.AddScoped<InternInfraStructureGenerationService>();
+builder.Services.AddScoped<InternTestsGenerationService>();
 
 using var host = builder.Build();
 using var scope = host.Services.CreateScope();
@@ -26,9 +31,16 @@ var tipoDoProjeto = args[1].ToUpper();
 if (tipoDoProjeto.Equals("API") || tipoDoProjeto.Equals("CONSOLE"))
 {
     var archGenService = scope.ServiceProvider.GetRequiredService<IArchGenService>();
-    archGenService.SetNomeDoProjeto(nomeProjeto);
-    await archGenService.VerifySoluctionFiles();
+    archGenService.SetConfiguracaoDoProjeto(nomeProjeto, tipoDoProjeto);
+    await archGenService.VerifyInternStructure_Diretory();
+    try
+    {
+        await archGenService.ExecInternStructure();
+    } catch (Exception e)
+    {
+        Console.WriteLine($"Error: {e.Message}");
+    }
 } else
 {
-    
+    Console.WriteLine("Info errada");
 }
