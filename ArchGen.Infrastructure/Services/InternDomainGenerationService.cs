@@ -17,6 +17,17 @@ public class InternDomainGenerationService
     private string PathInternSolution = Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure");
     private string PathDomainFromInternEstructure = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure" ,"Domain"));
     
+    public async Task SetPathInternDomain(string path)
+    {
+        if (Path.Exists(path))
+        {
+            PathDomainFromInternEstructure = Path.Combine(path, "Domain");
+            PathInternSolution = path;
+        } else
+        {
+            throw new ServiceException("O path Não existe");
+        }
+    }
     public async Task<string> SetPathDomain(string path_domain)
     {
         if (Path.Exists(path_domain))
@@ -115,25 +126,25 @@ public class User
     {{
         if(string.IsNullOrEmpty(Nome))
         {{
-            throw new DomainException('O nome não pode ser nulo ou vazio.');
+            throw new DomainException(""O nome não pode ser nulo ou vazio."");
         }}
     }}
     public void Validate_Telefone ()
     {{
         if(string.IsNullOrEmpty(Telefone))
         {{
-            throw new DomainException('O telefone não pode ser nulo ou vazio.');
+            throw new DomainException(""O telefone não pode ser nulo ou vazio."");
         }}
     }}
     public void Validate_Email ()
     {{
         if(string.IsNullOrEmpty(Email))
         {{
-            throw new DomainException('O email não pode ser nulo ou vazio.');
+            throw new DomainException(""O email não pode ser nulo ou vazio."");
         }}
-        if (!Email.Contains('@gmail.com'))
+        if (!Email.Contains(""@gmail.com""))
         {{
-            throw new DomainException('Formato invalido de email, ex: (exemplo@gmail.com)');
+            throw new DomainException(""Formato invalido de email, ex: (exemplo@gmail.com)"");
         }}
     }}
 }}");

@@ -13,14 +13,14 @@ public class UserUseCase : IUserUseCase
         var verifyUser = await _repo.VerifyUserExists_WithEmail(request.Email);
         if (verifyUser)
         {
-            throw new UseCaseException('Usuario ja existe.');
+            throw new UseCaseException("Usuario ja existe.");
         }
         var DataUser = new User
         {
             ID = Guid.NewGuid(),
             Email = request.Email,
             Nome = request.Nome,
-            Telefone = request.Telefone ?? throw new UseCaseException('Telefone é obrigatório'),
+            Telefone = request.Telefone ?? throw new UseCaseException("Telefone é obrigatório"),
             Senha = request.Senha
         };
         DataUser.Validate_Nome();
@@ -34,7 +34,7 @@ public class UserUseCase : IUserUseCase
         var verifyUser = await _repo.VerifyUserExists_WithID(ID);
         if (!verifyUser)
         {
-            throw new UseCaseException('Usuario não existe.');
+            throw new UseCaseException("Usuario não existe.");
         }
         var GetData = await _repo.GetDataUser_WithID(ID);
         return new ReadUserResponse
@@ -49,7 +49,7 @@ public class UserUseCase : IUserUseCase
         var verifyUser = await _repo.VerifyUserExists_WithID(ID);
         if (!verifyUser)
         {
-            throw new UseCaseException('Usuario não existe.');
+            throw new UseCaseException("Usuario não existe.");
         }
         var DataUser = new User
         {
@@ -69,14 +69,14 @@ public class UserUseCase : IUserUseCase
         var verifyUser = await _repo.VerifyUserExists_WithID(ID);
         if (!verifyUser)
         {
-            throw new UseCaseException('Usuario não existe.');
+            throw new UseCaseException("Usuario não existe.");
         }
         var result = await _repo.DeleteUser(ID);
         return result;
     }
     public async Task<string> Exec()
     {
-        return 'Ta funcionando.';
+        return "Ta funcionando.";
     }
     
 }

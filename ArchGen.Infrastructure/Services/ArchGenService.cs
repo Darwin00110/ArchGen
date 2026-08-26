@@ -10,23 +10,36 @@ public class ArchGenService : IArchGenService
     private string? NomeDoProjeto;
     private string? TipoDoProjeto;
 
+    
+    private string PathInternSolution = Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure");
     private string PathAPIFromInternEstructure = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure" ,"API"));
     private string PathConsoleFromInternEstructure = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure" ,"Console"));
     
-    private string PathInternSolution = Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure");
     private readonly IArchGenRepository _repo;
     private readonly InternDomainGenerationService _Intern_domain;
     private readonly InternApplicationGenerationService _Intern_application;
     private readonly InternInfraStructureGenerationService _Intern_infrastructure;
+    private readonly InternAPIGenerationService _Intern_API;
+    private readonly InternTestsGenerationService _Intern_tests;
+    private readonly InternSolutionGenerationService _Intern_Solution;
+    private readonly InternConsoleGenerationService _Intern_Console;
     public ArchGenService(IArchGenRepository repo, 
     InternDomainGenerationService intern_Domain,
     InternApplicationGenerationService intern_Application,
-    InternInfraStructureGenerationService intern_InfraStructure)
+    InternInfraStructureGenerationService intern_InfraStructure,
+    InternTestsGenerationService intern_Tests,
+    InternAPIGenerationService intern_api,
+    InternSolutionGenerationService intern_solution,
+    InternConsoleGenerationService intern_console)
     {
         _repo = repo;
         _Intern_domain = intern_Domain;
         _Intern_application = intern_Application;
         _Intern_infrastructure = intern_InfraStructure;
+        _Intern_tests = intern_Tests;
+        _Intern_API = intern_api;
+        _Intern_Solution = intern_solution;
+        _Intern_Console = intern_console;
     }
     public void SetConfiguracaoDoProjeto(string nomeDoProjeto, string TipoProjeto)
     {
@@ -34,174 +47,64 @@ public class ArchGenService : IArchGenService
         TipoDoProjeto = TipoProjeto;
         TipoDoProjeto = TipoDoProjeto.ToUpper();
     }
-    public async Task<bool> VerifyInternStructure_Diretory()
+    public async Task<bool> VerifyInternStructure_Diretory(string path)
     {
-        if (!Directory.Exists(PathInternSolution))
+        if (string.IsNullOrEmpty(path))
         {
-            Directory.CreateDirectory(PathInternSolution);
+            path = PathInternSolution;
+        }
+        if (!Directory.Exists(path))
+        {
+            Directory.CreateDirectory(path);
         }
         return true;
     }
 
-    public async Task<bool> ExecInternStructure()
+    public async Task<bool> ExecInternStructure(string Path)
     {
         try
         {
+            await VerifyInternStructure_Diretory(Path);
+
+            await _Intern_domain.SetPathInternDomain(Path);
             await _Intern_domain.VerifyDomainInternStructure();
             await _Intern_domain.CreateStructure();
 
+            await _Intern_application.SetPathInternApplication(Path);
             await _Intern_application.VerifyApplicationInternStructure();
             await _Intern_application.CreateInternApplicationFiles();
 
+            await _Intern_infrastructure.SetPathInternInfraStructure(Path);
             await _Intern_infrastructure.VerifyInfraStructureInternStructure();
             await _Intern_infrastructure.CreateInternStructure();
+
+            //Adicionar a verificação dos arquivos do Teste aqui 
+            await _Intern_tests.SetPathInternTests(Path);
+            await _Intern_tests.CreateStructureInternTests();
+
+
+            if (TipoDoProjeto!.Equals("API"))
+            {
+                await _Intern_API.SetPathInternAPI(Path);
+                await _Intern_API.Validate_InternAPI();
+                await _Intern_API.CreateInternAPI();
+            }    
+            if (TipoDoProjeto!.Equals("CONSOLE"))
+            {
+                await _Intern_Console.SetConsoleInternDomain(Path);
+                await _Intern_Console.VerifyInternConsoleFiles();
+                await _Intern_Console.CreateInternConsoleFiles();
+            }
+            _Intern_Solution.SetTipoDoProjeto(TipoDoProjeto);
+            await _Intern_Solution.SetPathInternSolution(Path); 
+            await _Intern_Solution.VerifyFileSolution();
+            await _Intern_Solution.CreateSoluctionFiles();
         } catch(Exception e)
         {
             throw new ServiceException($"Error: {e.Message}");
-        }
-        if (!Directory.Exists(PathTestsFromInternEstructure))
-        {
-            await VerifyInternTestsFiles();
-        } else
-        {
-            Console.WriteLine("Camada ja existente.");
-            
-        }
-        if (TipoDoProjeto!.Equals("API") && !Directory.Exists(PathAPIFromInternEstructure))
-        {
-            await VerifyInternAPIFiles();
         } 
-        if (TipoDoProjeto!.Equals("CONSOLE") && !Directory.Exists(PathConsoleFromInternEstructure))
-        {
-            await VerifyInternConsoleFiles();
-        } 
-        if(!File.Exists(Path.Combine(PathInternSolution, "Solution.sln")))
-        {
-            await VerifySoluctionFiles();
-        } else
-        {
-            Console.WriteLine("Camada ja existente.");
-        }
-        Console.WriteLine("Estrutura interna criada com sucesso.");
         return true;
     }
-
     
-    private class ProcessResponse
-    {
-        public string Saida {get; set;} = string.Empty;
-        public string Error {get; set;} = string.Empty;
-    }
-    private async Task<ProcessResponse> StartProcesso(string Command, string Arguments, bool UseShell = false, string WorkingDiretory = "")
-    {
-        WorkingDiretory = (WorkingDiretory == string.Empty) ? Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure") : WorkingDiretory;
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = Command,
-            Arguments = Arguments,
-            WorkingDirectory = WorkingDiretory,
-            UseShellExecute = UseShell,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
-        Process process = new Process
-        {
-            StartInfo = psi
-        };
-        process.Start();
-        string saida = await process.StandardOutput.ReadToEndAsync();
-        string error = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
-        return new ProcessResponse
-        {
-            Error = error,
-            Saida = saida
-        };
-    }
-    public async Task<bool> VerifyInternTestsFiles() {
-        if (!Directory.Exists(PathTestsFromInternEstructure))
-        {
-            await StartProcesso("dotnet", "new xunit -n Tests", false, PathInternSolution);
-        }
-        return true;
-    }
-    public async Task<bool> VerifySoluctionFiles()
-    {
-        if(!File.Exists(Path.Combine(PathInternSolution, "Solution.sln")))
-        {
-           await StartProcesso("dotnet", "new sln -n Solution", false, PathInternSolution);
-           await StartProcesso("dotnet", "sln add Domain", false, PathInternSolution);
-           await StartProcesso("dotnet", "sln add Application", false, PathInternSolution);
-           await StartProcesso("dotnet", "sln add InfraStructure", false, PathInternSolution);
-           await StartProcesso("dotnet", "sln add Tests", false, PathInternSolution);
-            if (TipoDoProjeto!.Equals("API"))
-            {
-                await StartProcesso("dotnet", "sln add API", false, PathInternSolution);
-                await StartProcesso("dotnet", "add API reference Domain", false, PathInternSolution);
-                await StartProcesso("dotnet", "add API reference Application", false, PathInternSolution);
-                await StartProcesso("dotnet", "add API reference InfraStructure", false, PathInternSolution);
-            }
-            if (TipoDoProjeto!.Equals("CONSOLE"))
-            {
-                await StartProcesso("dotnet", "sln add CONSOLE", false, PathInternSolution);
-                await StartProcesso("dotnet", "add CONSOLE reference Domain", false, PathInternSolution);
-                await StartProcesso("dotnet", "add CONSOLE reference Application", false, PathInternSolution);
-                await StartProcesso("dotnet", "add CONSOLE reference InfraStructure", false, PathInternSolution);
-            }
-            await StartProcesso("dotnet", "add Application reference Domain", false, PathInternSolution);
-            await StartProcesso("dotnet", "add InfraStructure reference Domain", false, PathInternSolution);
-            await StartProcesso("dotnet", "add InfraStructure reference Application", false, PathInternSolution);
-            await StartProcesso("dotnet", "add Tests reference Domain", false, PathInternSolution);
-            await StartProcesso("dotnet", "add Tests reference Application", false, PathInternSolution);
-        }
-        return true;
-    }
-    public async Task<bool> VerifyInternConsoleFiles()
-    {
-        if (!Directory.Exists(PathConsoleFromInternEstructure))
-        {
-            await StartProcesso("dotnet", "new console -n Console", false, PathInternSolution);
-            await File.WriteAllTextAsync(Path.Combine(PathConsoleFromInternEstructure, "Program.cs")!, $@"
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Application;
-using InfraStructure;
-using Domain;
-var builder = Host.CreateApplicationBuilder(args);
-var PathBanco = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, '..', 'ArchGen.Infrastructure', 'Data','ArchGen.db'));
-builder.Services.AddDbContext<AppDbContext>(e =>
-{{
-    e.UseSqlite($'Data Source={{PathBanco}}');
-}});
-builder.Services.AddScoped<IUserUseCase, UserUseCase>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-using var host = builder.Build();
-using var scope = host.Services.CreateScope();
-if(args.Length == 0 || args.Length < 1)
-{{
-    Console.WriteLine('Por favor, forneça o nome do projeto e o tipo do projeto (API ou CONSOLE) como argumentos.');
-    return;
-}}
-
-var Argumentos = args[0];
-if (Argumentos.Equals('Parametro')) {{
-    var UseCase = scope.ServiceProvider.GetRequiredService<IUserUseCase>();
-    var Saida = UseCase.Exec();
-    Console.WriteLine(Saida);
-}}
-");
-            await StartProcesso("dotnet", @"add package Microsoft.Extensions.Hosting", false, PathConsoleFromInternEstructure);
-        }
-        return true;
-    }
-    public async Task<bool> VerifyInternAPIFiles()
-    {
-        if (!Directory.Exists(PathAPIFromInternEstructure))
-        {
-            await StartProcesso("dotnet", "new webapi -n API", false, PathInternSolution);
-        }
-        return true;
-    }
+    
 }

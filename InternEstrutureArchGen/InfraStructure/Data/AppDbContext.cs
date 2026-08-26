@@ -1,4 +1,5 @@
-﻿using Domain;
+
+using Domain;
 using Microsoft.EntityFrameworkCore;
 namespace InfraStructure;
 public class AppDbContext : DbContext       

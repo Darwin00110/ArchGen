@@ -13,6 +13,17 @@ public class InternInfraStructureGenerationService
     {
         _dotnet = dotnet;
     }
+    public async Task SetPathInternInfraStructure(string path)
+    {
+        if (Path.Exists(path))
+        {
+            PathInfrastructureFromInternEstructure = Path.Combine(path, "InfraStructure");
+            PathInternSolution = path;
+        } else
+        {
+            throw new ServiceException("O path Não existe");
+        }
+    }
     public async Task VerifyInfraStructureInternStructure()
     {
         var PathInfraStructureData = Path.Combine(PathInfrastructureFromInternEstructure!, "Data");
@@ -59,6 +70,7 @@ public class InternInfraStructureGenerationService
             var PathRepository = Path.Combine(PathInfrastructureFromInternEstructure!, "Repository");
             
             var PathFile_AppDbContext = Path.Combine(PathData, "AppDbContext.cs");
+            var PathFile_AppDbContextFactory = Path.Combine(PathData, "AppDbContextFactory.cs");
             var PathFile_UserRepository = Path.Combine(PathRepository, "UserRepository.cs");
             Directory.CreateDirectory(PathData);
             Directory.CreateDirectory(PathRepository);
@@ -73,6 +85,7 @@ public class AppDbContext : DbContext
     }}
     public DbSet<User> Users {{ get; set; }}
 }}");
+
         await File.WriteAllTextAsync(PathFile_UserRepository, $@"
 namespace InfraStructure;
 using Domain;
@@ -94,7 +107,7 @@ public class UserRepository : IUserRepository
             return true;
         }} catch(Exception e)
         {{
-            throw new InfraStructureException($'Error: {{e.Message}}');
+            throw new InfraStructureException($""Error: {{e.Message}}"");
         }}
     }}
     public async Task<bool> UpdateUser(User user)
@@ -104,7 +117,7 @@ public class UserRepository : IUserRepository
             var query = await _context.Users.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
             if(query == null)
             {{
-                throw new InfraStructureException('Usuario não encontrado.');
+                throw new InfraStructureException(""Usuario não encontrado."");
             }}
             query!.Email = user.Email;
             query!.Telefone = user.Telefone;
@@ -114,7 +127,7 @@ public class UserRepository : IUserRepository
             return true;
         }} catch(Exception e)
         {{
-            throw new InfraStructureException($'Error: {{e.Message}}');
+            throw new InfraStructureException($""Error: {{e.Message}}"");
         }}
     }}
     public async Task<bool> DeleteUser(Guid Id)
@@ -126,7 +139,7 @@ public class UserRepository : IUserRepository
             return true;
         }} catch(Exception e)
         {{
-            throw new InfraStructureException($'Error: {{e.Message}}');
+            throw new InfraStructureException($""Error: {{e.Message}}"");
         }}
     }}
     public async Task<bool> VerifyUserExists_WithEmail(string email)
@@ -141,7 +154,7 @@ public class UserRepository : IUserRepository
             return true;
         }} catch(Exception e)
         {{
-            throw new InfraStructureException($'Error: {{e.Message}}');
+            throw new InfraStructureException($""Error: {{e.Message}}"");
         }}
     }}
     public async Task<User> GetDataUser_WithID(Guid ID)
@@ -151,7 +164,7 @@ public class UserRepository : IUserRepository
             var query = await _context.Users.Where(x => x.ID == ID).FirstOrDefaultAsync();
             if(query == null)
             {{
-                throw new InfraStructureException('Usuario não existe.');
+                throw new InfraStructureException(""Usuario não existe."");
             }}
             return new User
             {{
@@ -162,7 +175,7 @@ public class UserRepository : IUserRepository
             }};
         }} catch(Exception e)
         {{
-            throw new InfraStructureException($'Error: {{e.Message}}');
+            throw new InfraStructureException($""Error: {{e.Message}}"");
         }}
     }}
     public async Task<bool> VerifyUserExists_WithID(Guid ID)
@@ -177,7 +190,7 @@ public class UserRepository : IUserRepository
             return true;
         }} catch(Exception e)
         {{
-            throw new InfraStructureException($'Error: {{e.Message}}');
+            throw new InfraStructureException($""Error: {{e.Message}}"");
         }}
     }} 
 }}");
@@ -186,5 +199,9 @@ public class UserRepository : IUserRepository
         {
             File.Delete(Path.Combine(PathInfrastructureFromInternEstructure, "Class1.cs"));
         }
+        await _dotnet.AddedPackageInTheProject("Microsoft.EntityFrameworkCore", PathInfrastructureFromInternEstructure!);
+        await _dotnet.AddedPackageInTheProject("Microsoft.EntityFrameworkCore.Design", PathInfrastructureFromInternEstructure!);
+        await _dotnet.AddedPackageInTheProject("Microsoft.EntityFrameworkCore.Sqlite", PathInfrastructureFromInternEstructure!);
     }
+    
 }

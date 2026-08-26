@@ -1,4 +1,5 @@
 ﻿using ArchGen.Application;
+using ArchGen.Domain;
 
 namespace ArchGen.Infrastructure;
 
@@ -11,6 +12,18 @@ public class InternTestsGenerationService
     public InternTestsGenerationService(IDotnetService dotnet)
     {
         _dotnet = dotnet;
+    }
+    public async Task SetPathInternTests(string path)
+    {
+        if (Path.Exists(path))
+        {
+            PathTestsFromInternEstructure = Path.Combine(path, "Tests");   
+            PathInternSolution = path;
+        } else
+        {
+            throw new ServiceException("O path Não existe");
+            
+        }
     }
     public async Task<bool> CreateStructureInternTests() {
         if (!Directory.Exists(PathTestsFromInternEstructure))

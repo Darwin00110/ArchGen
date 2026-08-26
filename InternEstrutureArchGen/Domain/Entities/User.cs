@@ -12,25 +12,25 @@ public class User
     {
         if(string.IsNullOrEmpty(Nome))
         {
-            throw new DomainException('O nome não pode ser nulo ou vazio.');
+            throw new DomainException("O nome não pode ser nulo ou vazio.");
         }
     }
     public void Validate_Telefone ()
     {
         if(string.IsNullOrEmpty(Telefone))
         {
-            throw new DomainException('O telefone não pode ser nulo ou vazio.');
+            throw new DomainException("O telefone não pode ser nulo ou vazio.");
         }
     }
     public void Validate_Email ()
     {
         if(string.IsNullOrEmpty(Email))
         {
-            throw new DomainException('O email não pode ser nulo ou vazio.');
+            throw new DomainException("O email não pode ser nulo ou vazio.");
         }
-        if (!Email.Contains('@gmail.com'))
+        if (!Email.Contains("@gmail.com"))
         {
-            throw new DomainException('Formato invalido de email, ex: (exemplo@gmail.com)');
+            throw new DomainException("Formato invalido de email, ex: (exemplo@gmail.com)");
         }
     }
 }

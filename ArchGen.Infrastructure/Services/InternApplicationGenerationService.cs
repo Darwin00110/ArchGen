@@ -13,6 +13,17 @@ public class InternApplicationGenerationService
     {
         _dotnet = dotnet;
     }
+    public async Task SetPathInternApplication(string path)
+    {
+        if (Path.Exists(path))
+        {
+            PathApplicationFromInternEstructure = Path.Combine(path, "Application");
+            PathInternSolution = path;
+        } else
+        {
+            throw new ServiceException("O path Não existe");
+        }
+    }
     public async Task VerifyApplicationInternStructure()
     {
         var PathApplicationDTOs = Path.Combine(PathApplicationFromInternEstructure!, "DTOs");
@@ -80,14 +91,14 @@ public class UserUseCase : IUserUseCase
         var verifyUser = await _repo.VerifyUserExists_WithEmail(request.Email);
         if (verifyUser)
         {{
-            throw new UseCaseException('Usuario ja existe.');
+            throw new UseCaseException(""Usuario ja existe."");
         }}
         var DataUser = new User
         {{
             ID = Guid.NewGuid(),
             Email = request.Email,
             Nome = request.Nome,
-            Telefone = request.Telefone ?? throw new UseCaseException('Telefone é obrigatório'),
+            Telefone = request.Telefone ?? throw new UseCaseException(""Telefone é obrigatório""),
             Senha = request.Senha
         }};
         DataUser.Validate_Nome();
@@ -101,7 +112,7 @@ public class UserUseCase : IUserUseCase
         var verifyUser = await _repo.VerifyUserExists_WithID(ID);
         if (!verifyUser)
         {{
-            throw new UseCaseException('Usuario não existe.');
+            throw new UseCaseException(""Usuario não existe."");
         }}
         var GetData = await _repo.GetDataUser_WithID(ID);
         return new ReadUserResponse
@@ -116,7 +127,7 @@ public class UserUseCase : IUserUseCase
         var verifyUser = await _repo.VerifyUserExists_WithID(ID);
         if (!verifyUser)
         {{
-            throw new UseCaseException('Usuario não existe.');
+            throw new UseCaseException(""Usuario não existe."");
         }}
         var DataUser = new User
         {{
@@ -136,14 +147,14 @@ public class UserUseCase : IUserUseCase
         var verifyUser = await _repo.VerifyUserExists_WithID(ID);
         if (!verifyUser)
         {{
-            throw new UseCaseException('Usuario não existe.');
+            throw new UseCaseException(""Usuario não existe."");
         }}
         var result = await _repo.DeleteUser(ID);
         return result;
     }}
     public async Task<string> Exec()
     {{
-        return 'Ta funcionando.';
+        return ""Ta funcionando."";
     }}
     
 }}
@@ -175,13 +186,13 @@ namespace Application;
 
 public class CreateUserRequest
 {{
-    [Required(ErrorMessage = 'O nome é obrigatório.')]
+    [Required(ErrorMessage = ""O nome é obrigatório."")]
     public required string Nome {{ get; set; }}
-    [Required(ErrorMessage = 'O email é obrigatório.')]
-    [EmailAddress(ErrorMessage = 'O email fornecido não é válido.')]
+    [Required(ErrorMessage = ""O email é obrigatório."")]
+    [EmailAddress(ErrorMessage = ""O email fornecido não é válido."")]
     public required string Email {{ get; set; }}
     public string? Telefone {{ get; set; }}
-    [Required(ErrorMessage = 'A senha é obrigatória.')]
+    [Required(ErrorMessage = ""A senha é obrigatória."")]
     public required string Senha {{get; set;}}
 }}");
         await File.WriteAllTextAsync(Path.Combine(PathDTOs, "ReadUserResponse.cs"), $@"
@@ -201,10 +212,10 @@ namespace Application;
 public class UpdateUserRequest
 {{
     public Guid? ID {{get; set;}}
-    [Required(ErrorMessage = 'O email é obrigatório.')]
-    [EmailAddress(ErrorMessage = 'O email fornecido não é válido.')]
+    [Required(ErrorMessage = ""O email é obrigatório."")]
+    [EmailAddress(ErrorMessage = ""O email fornecido não é válido."")]
     public required string Email {{ get; set; }}
-    [Required(ErrorMessage = 'A senha é obrigatória.')]
+    [Required(ErrorMessage = ""A senha é obrigatória."")]
     public required string Senha {{get; set;}}
     public required string Telefone {{get; set;}}
     public required string Nome {{get; set;}}

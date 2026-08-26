@@ -1,4 +1,5 @@
-﻿namespace InfraStructure;
+
+namespace InfraStructure;
 using Domain;
 using Microsoft.EntityFrameworkCore;
 
