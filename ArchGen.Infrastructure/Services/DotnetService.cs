@@ -6,325 +6,74 @@ namespace ArchGen.Infrastructure;
 
 public class DotnetService : IDotnetService
 {
-    
-    public async Task<ResultTerminalResponse> CriarClasse(string nomeClasse, string Path)
+    public Task<ResultTerminalResponse> CriarClasse(string nomeClasse, string path) =>
+        ExecuteDotnetAsync(path, "criar a classe", "new", "class", "-n", nomeClasse);
+
+    public Task<ResultTerminalResponse> CriarInterface(string nomeInterface, string path) =>
+        ExecuteDotnetAsync(path, "criar a interface", "new", "interface", "-n", nomeInterface);
+
+    public Task<ResultTerminalResponse> CriarCamadaConsole(string nomeCamada, string path) =>
+        ExecuteDotnetAsync(path, "criar o projeto Console", "new", "console", "-n", nomeCamada);
+
+    public Task<ResultTerminalResponse> CriarCamada_Classlib(string nomeCamada, string path) =>
+        ExecuteDotnetAsync(path, "criar a biblioteca de classes", "new", "classlib", "-n", nomeCamada);
+
+    public Task<ResultTerminalResponse> CriarCamada_xunit(string nomeCamada, string path) =>
+        ExecuteDotnetAsync(path, "criar o projeto de testes", "new", "xunit", "-n", nomeCamada);
+
+    public Task<ResultTerminalResponse> CriarCamada_API(string nomeCamada, string path) =>
+        ExecuteDotnetAsync(path, "criar o projeto API", "new", "webapi", "-n", nomeCamada);
+
+    public Task<ResultTerminalResponse> CriarCamada_Solucao(string nomeSolucao, string path) =>
+        ExecuteDotnetAsync(path, "criar a solution", "new", "sln", "-n", nomeSolucao);
+
+    public Task<ResultTerminalResponse> AddProject_in_the_Solution(string projeto, string workingPath) =>
+        ExecuteDotnetAsync(workingPath, "adicionar o projeto à solution", "sln", "add", projeto);
+
+    public Task<ResultTerminalResponse> ReferenceProject_in_the_Solution(string projeto, string referencia, string workingPath) =>
+        ExecuteDotnetAsync(workingPath, "adicionar a referência de projeto", "add", projeto, "reference", referencia);
+
+    public Task<ResultTerminalResponse> AddedPackageInTheProject(string nomePacote, string workingPath) =>
+        ExecuteDotnetAsync(workingPath, "adicionar o pacote", "add", "package", nomePacote);
+
+    public Task<ResultTerminalResponse> DbReferenceInfra_Migrations(string pathInfra, string pathConsoleOrApi, string pathSolution) =>
+        ExecuteDotnetAsync(pathSolution, "criar a migration", "ef", "migrations", "add", "Initial_DB", "--project", pathInfra, "--startup-project", pathConsoleOrApi);
+
+    public Task<ResultTerminalResponse> DbReferenceInfra_Database(string pathInfra, string pathConsoleOrApi, string pathSolution) =>
+        ExecuteDotnetAsync(pathSolution, "atualizar o banco de dados", "ef", "database", "update", "--project", pathInfra, "--startup-project", pathConsoleOrApi);
+
+    private static async Task<ResultTerminalResponse> ExecuteDotnetAsync(string workingPath, string operation, params string[] arguments)
     {
-        ProcessStartInfo psi = new ProcessStartInfo
+        var startInfo = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = $"new class -n {nomeClasse}",
-            WorkingDirectory = Path,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };
-    }
-    public async Task<ResultTerminalResponse> CriarInterface(string nomeInterface, string Path)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"new interface -n {nomeInterface}",
-            WorkingDirectory = Path,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };
-    }
-    public async Task<ResultTerminalResponse> CriarCamadaConsole(string nomeCamada, string Path)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"new console -n {nomeCamada}",
-            WorkingDirectory = Path,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };
-    }
-    public async Task<ResultTerminalResponse> CriarCamada_Classlib(string nomeCamada, string Path)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"new classlib -n {nomeCamada}",
-            WorkingDirectory = Path,
-            
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };
-    }
-    public async Task<ResultTerminalResponse> CriarCamada_xunit(string nomeCamada, string Path)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"new xunit -n {nomeCamada}",
-            WorkingDirectory = Path,
-            
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };
-    }
-    public async Task<ResultTerminalResponse> CriarCamada_API(string nomeCamada, string Path)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"new webapi -n {nomeCamada}",
-            WorkingDirectory = Path,
-            
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };
-    }
-    public async Task<ResultTerminalResponse> CriarCamada_Solucao(string nomeSolucao, string Path)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"new sln -n {nomeSolucao}",
-            WorkingDirectory = Path,
-            
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };
-    }
-    public async Task<ResultTerminalResponse> AddProject_in_the_Solution(string PathSolucao, string WorkingPath)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"sln add {PathSolucao}",
-            WorkingDirectory = WorkingPath,
-            
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };   
-    }
-    public async Task<ResultTerminalResponse> ReferenceProject_in_the_Solution(string PathSolucao01,string PathSolucao02, string WorkingPath)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"add {PathSolucao01} reference {PathSolucao02}",
-            WorkingDirectory = WorkingPath,
-            
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };   
-    }
-    public async Task<ResultTerminalResponse> AddedPackageInTheProject(string NomePacote,string WorkingPath)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            Arguments = $"add package {NomePacote}",
-            WorkingDirectory = WorkingPath,
-            
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saida = await processo.StandardOutput.ReadToEndAsync();
-        var error = await processo.StandardError.ReadToEndAsync();
-        await processo.WaitForExitAsync();
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        };   
-    }
-    public async Task<ResultTerminalResponse> DbReferenceInfra_Migrations(string PathInfra, string Pathconsole_and_API, string Pathsolution)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            WorkingDirectory = Pathsolution,
+            WorkingDirectory = workingPath,
             UseShellExecute = false,
             RedirectStandardError = true,
-            RedirectStandardOutput = true   
+            RedirectStandardOutput = true
         };
-        psi.ArgumentList.Add("ef");
-        psi.ArgumentList.Add("migrations");
-        psi.ArgumentList.Add("add");
-        psi.ArgumentList.Add("Initial_DB");
-        psi.ArgumentList.Add("--project");
-        psi.ArgumentList.Add(PathInfra);
-        psi.ArgumentList.Add("--startup-project");
-        psi.ArgumentList.Add(Pathconsole_and_API);
 
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saidaTask = processo.StandardOutput.ReadToEndAsync();
-        var errorTask = processo.StandardError.ReadToEndAsync();
-        await Task.WhenAll(saidaTask, errorTask, processo.WaitForExitAsync());
-
-        var saida = await saidaTask;
-        var error = await errorTask;
-        if (processo.ExitCode != 0)
+        foreach (var argument in arguments)
         {
-            var detalhes = string.Join(Environment.NewLine,
-                new[] { saida, error }.Where(texto => !string.IsNullOrWhiteSpace(texto)));
-            throw new ServiceException($"Falha ao criar a migration. Exit code: {processo.ExitCode}.{Environment.NewLine}{detalhes}");
+            startInfo.ArgumentList.Add(argument);
         }
 
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        }; 
-    }
-    public async Task<ResultTerminalResponse> DbReferenceInfra_Database(string PathInfra, string Pathconsole_and_API, string Pathsolution)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            WorkingDirectory = Pathsolution,
-            UseShellExecute = false,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true   
-        };
-        psi.ArgumentList.Add("ef");
-        psi.ArgumentList.Add("database");
-        psi.ArgumentList.Add("update");
-        psi.ArgumentList.Add("--project");
-        psi.ArgumentList.Add(PathInfra);
-        psi.ArgumentList.Add("--startup-project");
-        psi.ArgumentList.Add(Pathconsole_and_API);
+        using var process = new Process { StartInfo = startInfo };
+        process.Start();
 
-        var processo = new Process{
-            StartInfo = psi
-        };
-        processo.Start();
-        var saidaTask = processo.StandardOutput.ReadToEndAsync();
-        var errorTask = processo.StandardError.ReadToEndAsync();
-        await Task.WhenAll(saidaTask, errorTask, processo.WaitForExitAsync());
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var errorTask = process.StandardError.ReadToEndAsync();
+        await Task.WhenAll(outputTask, errorTask, process.WaitForExitAsync());
 
-        var saida = await saidaTask;
+        var output = await outputTask;
         var error = await errorTask;
-        if (processo.ExitCode != 0)
+        if (process.ExitCode != 0)
         {
-            var detalhes = string.Join(Environment.NewLine,
-                new[] { saida, error }.Where(texto => !string.IsNullOrWhiteSpace(texto)));
-            throw new ServiceException($"Falha ao criar database. Exit code: {processo.ExitCode}.{Environment.NewLine}{detalhes}");
+            var details = string.Join(Environment.NewLine,
+                new[] { output, error }.Where(text => !string.IsNullOrWhiteSpace(text)));
+            throw new ServiceException($"Falha ao {operation}. Exit code: {process.ExitCode}.{Environment.NewLine}{details}");
         }
 
-        return new ResultTerminalResponse
-        {
-          Error = error,
-          Saida = saida  
-        }; 
+        return new ResultTerminalResponse { Saida = output, Error = error };
     }
 }

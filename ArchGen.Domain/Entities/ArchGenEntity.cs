@@ -9,6 +9,7 @@ public class ArchGenEntity
     public string? PathApplication {get; set;}
     public string? PathInfrastructure {get; set;}
     public string? PathTests {get; set;}
+    public string? PathSolution {get; set;}
 
     public void Validar_TipoDoProjeto()
     {

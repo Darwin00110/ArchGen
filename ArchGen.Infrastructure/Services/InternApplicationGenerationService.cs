@@ -3,7 +3,7 @@ using ArchGen.Domain;
 
 namespace ArchGen.Infrastructure;
 
-public class InternApplicationGenerationService
+public class InternApplicationGenerationService : IInternApplicationGenerationService
 {
     private string PathApplicationFromInternEstructure = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure" ,"Application"));
     private string PathInternSolution = Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure");
@@ -13,11 +13,16 @@ public class InternApplicationGenerationService
     {
         _dotnet = dotnet;
     }
+    private string NomeProjeto = string.Empty;
+    public async Task SetNomeProjeto(string nomeProjeto = "")
+    {
+        NomeProjeto = nomeProjeto;
+    }
     public async Task SetPathInternApplication(string path)
     {
         if (Path.Exists(path))
         {
-            PathApplicationFromInternEstructure = Path.Combine(path, "Application");
+            PathApplicationFromInternEstructure = Path.Combine(path, $"{NomeProjeto}.Application");
             PathInternSolution = path;
         } else
         {
@@ -71,14 +76,16 @@ public class InternApplicationGenerationService
         }
     }
     public async Task<bool> CreateInternApplicationFiles() {
+        var Domain = (NomeProjeto == string.Empty) ? "Domain" : $"{NomeProjeto}.Domain";
+        var Application = (NomeProjeto == string.Empty) ? "Application" : $"{NomeProjeto}.Application"; 
         if (!Directory.Exists(PathApplicationFromInternEstructure))
         {
-            await _dotnet.CriarCamada_Classlib("Application", PathInternSolution);
+            await _dotnet.CriarCamada_Classlib($"{NomeProjeto}.Application", PathInternSolution);
             var PathApplicationUseCases = Path.Combine(PathApplicationFromInternEstructure!, "UseCases");
             Directory.CreateDirectory(PathApplicationUseCases);
             await File.WriteAllTextAsync(Path.Combine(PathApplicationUseCases, "UserUseCase.cs"), @$"
-namespace Application;
-using Domain;
+namespace {Application};
+using {Domain};
 public class UserUseCase : IUserUseCase
 {{
     private readonly IUserRepository _repo;
@@ -164,7 +171,7 @@ public class UserUseCase : IUserUseCase
     {
         Directory.CreateDirectory(PathInterfaces);
         await File.WriteAllTextAsync(Path.Combine(PathInterfaces, "IUserUseCase.cs"), @$"
-namespace Application;
+namespace {Application};
 
 public interface IUserUseCase
 {{
@@ -182,7 +189,7 @@ public interface IUserUseCase
                 await File.WriteAllTextAsync(Path.Combine(PathDTOs, "CreateUserRequest.cs"), $@"
 using System.ComponentModel.DataAnnotations;
 
-namespace Application;
+namespace {Application};
 
 public class CreateUserRequest
 {{
@@ -196,7 +203,7 @@ public class CreateUserRequest
     public required string Senha {{get; set;}}
 }}");
         await File.WriteAllTextAsync(Path.Combine(PathDTOs, "ReadUserResponse.cs"), $@"
-namespace Application;
+namespace {Application};
 
 public class ReadUserResponse
 {{
@@ -207,7 +214,7 @@ public class ReadUserResponse
         await File.WriteAllTextAsync(Path.Combine(PathDTOs, "UpdateUserRequest.cs"), @$"
 using System.ComponentModel.DataAnnotations;
 
-namespace Application;
+namespace {Application};
 
 public class UpdateUserRequest
 {{
@@ -225,6 +232,7 @@ public class UpdateUserRequest
         if(File.Exists(Path.Combine(PathApplicationFromInternEstructure, "Class1.cs"))){
             File.Delete(Path.Combine(PathApplicationFromInternEstructure, "Class1.cs"));
         }
+        await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.Application", $"{NomeProjeto}.Domain", PathInternSolution);
         return true;
     }
 }

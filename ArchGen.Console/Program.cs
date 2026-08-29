@@ -11,15 +11,16 @@ builder.Services.AddDbContext<AppDbContext>(e =>
     e.UseSqlite($"Data Source={PathBanco}");
 });
 builder.Services.AddScoped<IArchGenRepository, ArchGenRepository>();
+builder.Services.AddScoped<ArchGenUseCase>();
 builder.Services.AddScoped<IArchGenService, ArchGenService>();
 builder.Services.AddScoped<IDotnetService, DotnetService>();
-builder.Services.AddScoped<InternDomainGenerationService>();
-builder.Services.AddScoped<InternApplicationGenerationService>();
-builder.Services.AddScoped<InternInfraStructureGenerationService>();
-builder.Services.AddScoped<InternTestsGenerationService>();
-builder.Services.AddScoped<InternSolutionGenerationService>();
-builder.Services.AddScoped<InternAPIGenerationService>();
-builder.Services.AddScoped<InternConsoleGenerationService>();
+builder.Services.AddScoped<IInternDomainGenerationService, InternDomainGenerationService>();
+builder.Services.AddScoped<IInternApplicationGenerationService, InternApplicationGenerationService>();
+builder.Services.AddScoped<IInternInfraStructureGenerationService, InternInfraStructureGenerationService>();
+builder.Services.AddScoped<IInternTestsGenerationService, InternTestsGenerationService>();
+builder.Services.AddScoped<IInternSolutionGenerationService, InternSolutionGenerationService>();
+builder.Services.AddScoped<IInternAPIGenerationService, InternAPIGenerationService>();
+builder.Services.AddScoped<IInternConsoleGenerationService, InternConsoleGenerationService>();
 
 using var host = builder.Build();
 using var scope = host.Services.CreateScope();
@@ -33,12 +34,13 @@ var tipoDoProjeto = args[1].ToUpper();
 
 if (tipoDoProjeto.Equals("API") || tipoDoProjeto.Equals("CONSOLE"))
 {
-    var archGenService = scope.ServiceProvider.GetRequiredService<IArchGenService>();
+    var archGenService = scope.ServiceProvider.GetRequiredService<ArchGenUseCase>();
     archGenService.SetConfiguracaoDoProjeto(nomeProjeto, tipoDoProjeto);
     try
     {
-        Console.WriteLine("Criando Estrutura Interna.");
+        Console.WriteLine("Criando Estrutura.");
         await archGenService.ExecInternStructure(args[2]);
+        Console.WriteLine("Estrutura Criada com sucesso.");
     } catch (Exception e)
     {
         Console.WriteLine($"Error: {e.Message}");

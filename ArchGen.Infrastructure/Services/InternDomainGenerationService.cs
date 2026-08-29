@@ -3,7 +3,7 @@ using ArchGen.Domain;
 
 namespace ArchGen.Infrastructure;
 
-public class InternDomainGenerationService
+public class InternDomainGenerationService : IInternDomainGenerationService
 {
     private readonly IDotnetService _dotnet;
     private readonly IArchGenRepository _repo;
@@ -16,17 +16,21 @@ public class InternDomainGenerationService
 
     private string PathInternSolution = Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure");
     private string PathDomainFromInternEstructure = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure" ,"Domain"));
-    
+    private string NomeProjeto = string.Empty;
     public async Task SetPathInternDomain(string path)
     {
         if (Path.Exists(path))
         {
-            PathDomainFromInternEstructure = Path.Combine(path, "Domain");
+            PathDomainFromInternEstructure = Path.Combine(path, $"{NomeProjeto}.Domain");
             PathInternSolution = path;
         } else
         {
             throw new ServiceException("O path Não existe");
         }
+    }
+    public async Task SetNomeProjeto(string nomeProjeto = "")
+    {
+        NomeProjeto = nomeProjeto;
     }
     public async Task<string> SetPathDomain(string path_domain)
     {
@@ -103,9 +107,10 @@ public class InternDomainGenerationService
     {
         try
         {
+            var Domain = (NomeProjeto == string.Empty) ? "Domain" : $"{NomeProjeto}.Domain";
             if (!Directory.Exists(PathDomainFromInternEstructure))
             {
-                await _dotnet.CriarCamada_Classlib("Domain", PathInternSolution);
+                await _dotnet.CriarCamada_Classlib($"{NomeProjeto}.Domain", PathInternSolution);
             }
             
             if(!Directory.Exists(Path.Combine(PathDomainFromInternEstructure, "Entities")))
@@ -113,7 +118,7 @@ public class InternDomainGenerationService
                 string PathDomainEntities = Path.Combine(PathDomainFromInternEstructure!, "Entities");
                 Directory.CreateDirectory(Path.Combine(PathDomainEntities));
                 await File.WriteAllTextAsync(Path.Combine(PathDomainEntities, "User.cs"), @$"
-namespace Domain;
+namespace {Domain};
 
 public class User
 {{
@@ -162,7 +167,7 @@ public class User
                 if(!File.Exists(Path.Combine(PathDomainExceptions, "DomainException.cs")))
                 {
                 await File.WriteAllTextAsync(Path.Combine(PathDomainExceptions, "DomainException.cs"), @$"
-namespace Domain;
+namespace {Domain};
 
 public class DomainException : Exception
 {{
@@ -175,7 +180,7 @@ public class DomainException : Exception
                 if(!File.Exists(Path.Combine(PathDomainExceptions, "ServiceException.cs")))
                 {
                 await File.WriteAllTextAsync(Path.Combine(PathDomainExceptions, "ServiceException.cs"), @$"
-namespace Domain;
+namespace {Domain};
 
 public class ServiceException : Exception
 {{
@@ -189,7 +194,7 @@ public class ServiceException : Exception
                 {
                     
         await File.WriteAllTextAsync(Path.Combine(PathDomainExceptions, "UseCaseException.cs"), @$"
-namespace Domain;
+namespace {Domain};
 
 public class UseCaseException : Exception
 {{
@@ -202,7 +207,7 @@ public class UseCaseException : Exception
                 if(!File.Exists(Path.Combine(PathDomainExceptions, "InfraStructureException.cs")))
                 {
         await File.WriteAllTextAsync(Path.Combine(PathDomainExceptions, "InfraStructureException.cs"), @$"
-namespace Domain;
+namespace {Domain};
 
 public class InfraStructureException : Exception
 {{
@@ -218,7 +223,7 @@ public class InfraStructureException : Exception
             {
                 Directory.CreateDirectory(Path.Combine(PathDomainFromInternEstructure!, "Interfaces"));
                 await File.WriteAllTextAsync(Path.Combine(PathDomainFromInternEstructure!, "Interfaces", "IUserRepository.cs"), $@"
-namespace Domain;
+namespace {Domain};
 
 public interface IUserRepository
 {{

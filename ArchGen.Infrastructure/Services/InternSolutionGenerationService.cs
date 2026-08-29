@@ -3,7 +3,7 @@ using ArchGen.Domain;
 
 namespace ArchGen.Infrastructure;
 
-public class InternSolutionGenerationService
+public class InternSolutionGenerationService : IInternSolutionGenerationService
 {
     private readonly IDotnetService _dotnet;
     public string TipoDoProjeto = string.Empty;
@@ -14,20 +14,25 @@ public class InternSolutionGenerationService
     {
         _dotnet = dotnet;
     }
+    private string NomeProjeto = string.Empty;
+    public async Task SetNomeProjeto(string nomeProjeto = "")
+    {
+        NomeProjeto = nomeProjeto;
+    }
     public async Task SetPathInternSolution(string path)
     {
         if (Path.Exists(path))
         {
             TipoDoProjeto = TipoDoProjeto.ToUpper();
             PathInternSolution = path;
-            PathInternInfraStructure = Path.Combine(PathInternSolution, "InfraStructure");
+            PathInternInfraStructure = Path.Combine(PathInternSolution, $"{NomeProjeto}.InfraStructure");
             if (TipoDoProjeto.Equals("API"))
             {
-                PathInternConsole_OR_API = Path.Combine(PathInternSolution, "API");
+                PathInternConsole_OR_API = Path.Combine(PathInternSolution, $"{NomeProjeto}.API");
             }
             if (TipoDoProjeto.Equals("CONSOLE"))
             {
-                PathInternConsole_OR_API = Path.Combine(PathInternSolution, "Console");
+                PathInternConsole_OR_API = Path.Combine(PathInternSolution, $"{NomeProjeto}.Console");
             }
         } else
         {
@@ -40,39 +45,39 @@ public class InternSolutionGenerationService
     }
     public async Task VerifyFileSolution()
     {
-        if (File.Exists(Path.Combine(PathInternSolution, "Solution.slnx")))
+        if (File.Exists(Path.Combine(PathInternSolution, $"{NomeProjeto}.slnx")))
         {
             throw new ServiceException("Impossivel continuar, o Arquivo(Solution.slnx) ja existe.");
         }
     }
     public async Task<bool> CreateSoluctionFiles()
     {
-        if(!File.Exists(Path.Combine(PathInternSolution, "Solution.slnx")))
+        if(!File.Exists(Path.Combine(PathInternSolution, $"{NomeProjeto}.slnx")))
         {
-           await _dotnet.CriarCamada_Solucao("Solution", PathInternSolution);
-           await _dotnet.AddProject_in_the_Solution("Domain", PathInternSolution);
-           await _dotnet.AddProject_in_the_Solution("Application", PathInternSolution);
-           await _dotnet.AddProject_in_the_Solution("InfraStructure", PathInternSolution);
-           await _dotnet.AddProject_in_the_Solution("Tests" ,PathInternSolution);
+           await _dotnet.CriarCamada_Solucao(NomeProjeto, PathInternSolution);
+           await _dotnet.AddProject_in_the_Solution($"{NomeProjeto}.Domain", PathInternSolution);
+           await _dotnet.AddProject_in_the_Solution($"{NomeProjeto}.Application", PathInternSolution);
+           await _dotnet.AddProject_in_the_Solution($"{NomeProjeto}.InfraStructure", PathInternSolution);
+           await _dotnet.AddProject_in_the_Solution($"{NomeProjeto}.Tests" ,PathInternSolution);
             if (TipoDoProjeto!.Equals("API"))
             {
-                await _dotnet.AddProject_in_the_Solution("API", PathInternSolution);
-                await _dotnet.ReferenceProject_in_the_Solution("API", "Domain", PathInternSolution);
-                await _dotnet.ReferenceProject_in_the_Solution("API", "Application", PathInternSolution);
-                await _dotnet.ReferenceProject_in_the_Solution("API",  "InfraStructure",PathInternSolution);
+                await _dotnet.AddProject_in_the_Solution($"{NomeProjeto}.API", PathInternSolution);
+                await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.API", $"{NomeProjeto}.Domain", PathInternSolution);
+                await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.API", $"{NomeProjeto}.Application", PathInternSolution);
+                await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.API",  $"{NomeProjeto}.InfraStructure",PathInternSolution);
             }
             if (TipoDoProjeto!.Equals("CONSOLE"))
             {
-                await _dotnet.AddProject_in_the_Solution("CONSOLE", PathInternSolution);
-                await _dotnet.ReferenceProject_in_the_Solution("CONSOLE" , "Domain", PathInternSolution);
-                await _dotnet.ReferenceProject_in_the_Solution("CONSOLE" , "Application", PathInternSolution);
-                await _dotnet.ReferenceProject_in_the_Solution("CONSOLE" , "InfraStructure", PathInternSolution);
+                await _dotnet.AddProject_in_the_Solution($"{NomeProjeto}.Console", PathInternSolution);
+                await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.Console" , $"{NomeProjeto}.Domain", PathInternSolution);
+                await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.Console" , $"{NomeProjeto}.Application", PathInternSolution);
+                await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.Console" , $"{NomeProjeto}.InfraStructure", PathInternSolution);
             }
-            await _dotnet.ReferenceProject_in_the_Solution("Application", "Domain", PathInternSolution);
-            await _dotnet.ReferenceProject_in_the_Solution("InfraStructure", "Domain", PathInternSolution);
-            await _dotnet.ReferenceProject_in_the_Solution("InfraStructure", "Application", PathInternSolution);
-            await _dotnet.ReferenceProject_in_the_Solution("Tests", "Domain", PathInternSolution);
-            await _dotnet.ReferenceProject_in_the_Solution("Tests" , "Application", PathInternSolution);
+            await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.Application", $"{NomeProjeto}.Domain", PathInternSolution);
+            await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.InfraStructure", $"{NomeProjeto}.Domain", PathInternSolution);
+            await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.InfraStructure", $"{NomeProjeto}.Application", PathInternSolution);
+            await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.Tests", $"{NomeProjeto}.Domain", PathInternSolution);
+            await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.Tests" , $"{NomeProjeto}.Application", PathInternSolution);
 
             try
             {

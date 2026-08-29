@@ -3,7 +3,7 @@ using ArchGen.Domain;
 
 namespace ArchGen.Infrastructure;
 
-public class InternAPIGenerationService
+public class InternAPIGenerationService : IInternAPIGenerationService
 {
     private string PathAPIFromInternEstructure = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure" ,"API"));
     private string PathInternSolution = Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure");
@@ -12,11 +12,17 @@ public class InternAPIGenerationService
     {
         _dotnet = dotnet;
     }
+    private string NomeProjeto = string.Empty;
+    public async Task SetNomeProjeto(string nomeProjeto = "")
+    {
+        NomeProjeto = nomeProjeto;
+        NomeProjeto = (NomeProjeto == string.Empty) ? "API" : NomeProjeto; 
+    }
     public async Task SetPathInternAPI(string path)
     {
         if (Path.Exists(path))
         {
-            PathAPIFromInternEstructure = Path.Combine(path, "API");
+            PathAPIFromInternEstructure = Path.Combine(path, $"{NomeProjeto}.API");
             PathInternSolution = path;
         } else
         {
@@ -48,35 +54,37 @@ public class InternAPIGenerationService
     }
     public async Task<bool> CreateInternAPI()
     {
+        var Domain = (NomeProjeto == string.Empty) ? "Domain" : $"{NomeProjeto}.Domain";
+        var Application = (NomeProjeto == string.Empty) ? "Application" : $"{NomeProjeto}.Application";
+        var InfraStructure = (NomeProjeto == string.Empty) ? "InfraStructure" : $"{NomeProjeto}.InfraStructure";
         if (!Directory.Exists(PathAPIFromInternEstructure))
         {
-            await _dotnet.CriarCamada_API("API", PathInternSolution);
-            await File.WriteAllTextAsync(Path.Combine(PathAPIFromInternEstructure, "Program.cs"), @"
-
+            await _dotnet.CriarCamada_API($"{NomeProjeto}.API", PathInternSolution);
+            await File.WriteAllTextAsync(Path.Combine(PathAPIFromInternEstructure, "Program.cs"), $@"
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Domain;
-using Application;
-using InfraStructure;
+using {Domain};
+using {Application};
+using {InfraStructure};
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-var PathDatabase = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "".."", ""InfraStructure"", ""Data"", ""database.db""));
-Console.WriteLine(PathDatabase);
+var solutionDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "".."", "".."", "".."", ""..""));
+var PathDatabase = Path.Combine(solutionDirectory, ""{NomeProjeto}.InfraStructure"", ""Data"", ""database.db"");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite($""Data Source={PathDatabase}""));
+    options.UseSqlite($""Data Source={{PathDatabase}}""));
 builder.Services.AddScoped<IUserUseCase, UserUseCase>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-{
+{{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+}}
 
 app.MapControllers();
 app.UseHttpsRedirection();
@@ -86,6 +94,9 @@ app.Run();");
         await _dotnet.AddedPackageInTheProject("Microsoft.EntityFrameworkCore.Design", PathAPIFromInternEstructure!);
         await _dotnet.AddedPackageInTheProject("Microsoft.EntityFrameworkCore.Sqlite", PathAPIFromInternEstructure!);
         await _dotnet.AddedPackageInTheProject("Swashbuckle.AspNetCore", PathAPIFromInternEstructure!);
+        await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.API", $"{NomeProjeto}.Domain", PathInternSolution);
+        await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.API", $"{NomeProjeto}.Application", PathInternSolution);
+        await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.API", $"{NomeProjeto}.InfraStructure", PathInternSolution);
         return true;
     }
 }

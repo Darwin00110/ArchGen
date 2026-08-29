@@ -3,7 +3,7 @@ using ArchGen.Domain;
 
 namespace ArchGen.Infrastructure;
 
-public class InternInfraStructureGenerationService
+public class InternInfraStructureGenerationService : IInternInfraStructureGenerationService
 {
     private readonly IDotnetService _dotnet;
     private string PathInfrastructureFromInternEstructure = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "..", "ArchGen.Infrastructure", "InternEstructure" ,"InfraStructure"));
@@ -13,11 +13,16 @@ public class InternInfraStructureGenerationService
     {
         _dotnet = dotnet;
     }
+    private string NomeProjeto = string.Empty;
+    public async Task SetNomeProjeto(string nomeProjeto = "")
+    {
+        NomeProjeto = nomeProjeto;
+    }
     public async Task SetPathInternInfraStructure(string path)
     {
         if (Path.Exists(path))
         {
-            PathInfrastructureFromInternEstructure = Path.Combine(path, "InfraStructure");
+            PathInfrastructureFromInternEstructure = Path.Combine(path, $"{NomeProjeto}.InfraStructure");
             PathInternSolution = path;
         } else
         {
@@ -63,21 +68,23 @@ public class InternInfraStructureGenerationService
     }
     public async Task CreateInternStructure()
     {
+        var Domain = (NomeProjeto == string.Empty) ? "Domain" : $"{NomeProjeto}.Domain";
+        var InfraStructureNome = (NomeProjeto == string.Empty) ? "InfraStructure" : $"{NomeProjeto}.InfraStructure";
         if (!Directory.Exists(PathInfrastructureFromInternEstructure))
         {
-            await _dotnet.CriarCamada_Classlib("InfraStructure", PathInternSolution);
+            await _dotnet.CriarCamada_Classlib($"{NomeProjeto}.InfraStructure", PathInternSolution);
             var PathData = Path.Combine(PathInfrastructureFromInternEstructure!, "Data");
             var PathRepository = Path.Combine(PathInfrastructureFromInternEstructure!, "Repository");
             
             var PathFile_AppDbContext = Path.Combine(PathData, "AppDbContext.cs");
-            var PathFile_AppDbContextFactory = Path.Combine(PathData, "AppDbContextFactory.cs");
             var PathFile_UserRepository = Path.Combine(PathRepository, "UserRepository.cs");
             Directory.CreateDirectory(PathData);
             Directory.CreateDirectory(PathRepository);
             await File.WriteAllTextAsync(PathFile_AppDbContext, $@"
-using Domain;
+using {Domain};
 using Microsoft.EntityFrameworkCore;
-namespace InfraStructure;
+using Microsoft.EntityFrameworkCore.Design;
+namespace {InfraStructureNome};
 public class AppDbContext : DbContext       
 {{
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
@@ -85,10 +92,29 @@ public class AppDbContext : DbContext
     }}
     public DbSet<User> Users {{ get; set; }}
 }}");
+            await File.WriteAllTextAsync(Path.Combine(PathData, "AppDbContextFactory.cs"), $@"
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+
+namespace {InfraStructureNome};
+
+public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
+{{
+    public AppDbContext CreateDbContext(string[] args)
+    {{
+        var solutionDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "".."", "".."", "".."", ""..""));
+        var databasePath = Path.Combine(solutionDirectory, ""{NomeProjeto}.InfraStructure"", ""Data"", ""database.db"");
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite($""Data Source={{databasePath}}"")
+            .Options;
+
+        return new AppDbContext(options);
+    }}
+}}");
 
         await File.WriteAllTextAsync(PathFile_UserRepository, $@"
-namespace InfraStructure;
-using Domain;
+namespace {InfraStructureNome};
+using {Domain};
 using Microsoft.EntityFrameworkCore;
 
 public class UserRepository : IUserRepository
@@ -202,6 +228,8 @@ public class UserRepository : IUserRepository
         await _dotnet.AddedPackageInTheProject("Microsoft.EntityFrameworkCore", PathInfrastructureFromInternEstructure!);
         await _dotnet.AddedPackageInTheProject("Microsoft.EntityFrameworkCore.Design", PathInfrastructureFromInternEstructure!);
         await _dotnet.AddedPackageInTheProject("Microsoft.EntityFrameworkCore.Sqlite", PathInfrastructureFromInternEstructure!);
+        await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.InfraStructure", $"{NomeProjeto}.Domain", PathInternSolution);
+        await _dotnet.ReferenceProject_in_the_Solution($"{NomeProjeto}.InfraStructure", $"{NomeProjeto}.Application", PathInternSolution);
     }
     
 }
