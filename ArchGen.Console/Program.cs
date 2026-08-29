@@ -24,10 +24,30 @@ builder.Services.AddScoped<IInternConsoleGenerationService, InternConsoleGenerat
 
 using var host = builder.Build();
 using var scope = host.Services.CreateScope();
-if(args.Length == 0 || args.Length < 3)
+if(args.Length < 3)
 {
-    Console.WriteLine("Por favor, forneça o nome do projeto e o tipo do projeto (API ou CONSOLE) como argumentos.");
+    try
+    {
+        
+    var archGenService = scope.ServiceProvider.GetRequiredService<ArchGenUseCase>();
+    Console.WriteLine("Argumentos invalidos ou não existentes, iniciando modo padrão.\n");
+    Console.WriteLine("Insira o Nome do projeto: ");
+    var nomeprojeto = Console.ReadLine();
+    Console.WriteLine("Insira o Tipo do projeto, ex: (API, CONSOLE)");
+    var tipodoprojeto = Console.ReadLine();
+    
+    Console.WriteLine("Insira o Path do projeto, obs: (caso não informe usaremos o Path relativo ao local da execução\nDesse programa)");
+    var path = Console.ReadLine();
+    path = (path == string.Empty) ? Environment.CurrentDirectory : path;
+    Console.WriteLine("Executando o programa");
+    archGenService.SetConfiguracaoDoProjeto(nomeprojeto!, tipodoprojeto!);
+    await archGenService.ExecInternStructure(path!);
+    Console.WriteLine($"Criação concluida em {path}.");
     return;
+    } catch(Exception e)
+    {
+        Console.WriteLine($"Error: {e.Message}");
+    }
 }
 var nomeProjeto = args[0];
 var tipoDoProjeto = args[1].ToUpper();
