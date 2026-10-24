@@ -1,8 +1,8 @@
 ﻿namespace ArchGen.Domain;
 
-public class InfrastructureException : Exception
+public class InfraStructureException : Exception
 {
-    public InfrastructureException(string message) : base(message)
+    public InfraStructureException(string message) : base(message)
     {
     }
 }

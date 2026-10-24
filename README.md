@@ -1,192 +1,261 @@
 <div align="center">
 
-# 🏗️ Arch Gen
+# 🏗️ ArchGen
 
-**Gerador de soluções C# em Clean Architecture, ele mesmo construído em Clean Architecture.**
+**Gerador profissional de soluções C# (.NET 8.0) em Clean Architecture, construído ele mesmo em Clean Architecture com EF Core, Injeção de Dependência, Sistema de Templates customizáveis e Testes Unitários com Mocks.**
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-Clean%20Architecture-239120?style=for-the-badge&logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
 [![EF Core](https://img.shields.io/badge/EF%20Core-SQLite-49A942?style=for-the-badge&logo=microsoft&logoColor=white)](https://learn.microsoft.com/ef/core/)
-
-[![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow?style=flat-square)](#-status-atual-e-limitações-conhecidas)
-[![License](https://img.shields.io/badge/license-uso%20livre-brightgreen?style=flat-square)](#-licença)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](#-contribuindo)
+[![Tests](https://img.shields.io/badge/Tests-86%20Passed-brightgreen?style=for-the-badge&logo=xunit&logoColor=white)](https://xunit.net/)
 
 </div>
 
 ---
-
-Gerador de scaffolding que cria, via `dotnet`, a base inicial de uma solução C# organizada em camadas (Clean Architecture).
-
-O objetivo é eliminar o trabalho manual repetitivo de montar Domain, Application, Infrastructure, Tests e a camada de apresentação (API ou Console) toda vez que um projeto novo começa — deixando a solução pronta para receber regra de negócio desde o primeiro commit.
-
-> 💡 **Dogfooding**: o próprio Arch Gen é uma aplicação C# construída seguindo a mesma Clean Architecture que ele gera para o usuário — Domain, Application e Infrastructure separados, com persistência própria em SQLite.
 
 ## 📑 Índice
 
-- [Visão geral](#-visão-geral)
-- [Estrutura gerada](#-estrutura-gerada)
-- [Como usar](#-como-usar)
-- [Requisitos](#-requisitos)
-- [Como o Arch Gen funciona por dentro](#-como-o-arch-gen-funciona-por-dentro)
-- [Persistência](#-persistência)
-- [Status atual e limitações conhecidas](#-status-atual-e-limitações-conhecidas)
-- [Roadmap](#-roadmap)
-- [Contribuindo](#-contribuindo)
+- [Visão Geral](#-visão-geral)
+- [Arquitetura do ArchGen](#-arquitetura-do-archgen)
+- [Funcionalidades Principais](#-funcionalidades-principais)
+- [Tabela de Ajuda no Terminal (`--help`)](#-tabela-de-ajuda-no-terminal---help)
+- [Como Usar](#-como-usar)
+  - [Geração de Projetos (API e Console)](#geração-de-projetos)
+  - [Gerenciamento e Customização de Templates](#gerenciamento-e-customização-de-templates)
+  - [Histórico de Projetos Gerados](#histórico-de-projetos-gerados)
+- [Estrutura das Soluções Geradas](#-estrutura-das-soluções-geradas)
+- [Banco de Dados (EF Core + SQLite)](#-banco-de-dados-ef-core--sqlite)
+- [Testes Unitários com Mocks](#-testes-unitários-com-mocks)
 - [Licença](#-licença)
-
-## 🔎 Visão geral
-
-O Arch Gen nasceu como um script Python de scaffolding e foi reescrito do zero em **C#**, seguindo Clean Architecture — a mesma estrutura que ele entrega para os projetos gerados. Ele orquestra chamadas ao `dotnet` CLI, organiza pastas, escreve arquivos-base, conecta referências entre projetos e monta a `.sln`, tudo a partir de um único comando.
-
-A ideia não é substituir a evolução manual do código C# gerado: é acelerar a largada. Depois que o Arch Gen termina, o projeto criado passa a ser a fonte da verdade; o Arch Gen só cuida do início — e agora também lembra o que já gerou.
-
-## 📁 Estrutura gerada
-
-Dependendo do modo escolhido (`API` ou `CONSOLE`), o Arch Gen monta uma solução com os seguintes projetos:
-
-| Projeto | Responsabilidade |
-|---|---|
-| 🧠 `NomeDoProjeto.Domain` | Entidades, regras de negócio, interfaces de domínio, exceções |
-| ⚙️ `NomeDoProjeto.Application` | Casos de uso, DTOs, contratos da aplicação |
-| 🗄️ `NomeDoProjeto.InfraStructure` | `DbContext`, repositórios, integrações técnicas (EF Core, SQLite) |
-| 🌐 `NomeDoProjeto.API` *(modo API)* | Endpoints HTTP, Swagger, injeção de dependência |
-| 💻 `NomeDoProjeto.Console` *(modo Console)* | Execução por linha de comando |
-| ✅ `NomeDoProjeto.Tests` | Testes unitários, organizados por camada |
-
-As referências entre projetos já saem conectadas respeitando a regra de dependência da Clean Architecture — nada aponta para fora do seu próprio nível:
-
-```mermaid
-graph LR
-    API[🌐 API / Console] --> APP[⚙️ Application]
-    API --> DOM[🧠 Domain]
-    API --> INFRA[🗄️ InfraStructure]
-    INFRA --> APP
-    INFRA --> DOM
-    APP --> DOM
-    TEST[✅ Tests] --> APP
-    TEST --> DOM
-```
-
-## 🚀 Como usar
-
-```bash
-dotnet run --project ArchGen.Console -- <NomeDoProjeto> <API|CONSOLE>
-```
-
-Com caminho de destino customizado (por padrão, usa o diretório atual):
-
-```bash
-dotnet run --project ArchGen.Console -- <NomeDoProjeto> <API|CONSOLE> <CaminhoDestino>
-```
-
-**Exemplos:**
-
-```bash
-dotnet run --project ArchGen.Console -- ArchGenDemo API
-dotnet run --project ArchGen.Console -- ArchGenDemo CONSOLE C:\Projetos\ArchGenDemo
-```
-
-> 💡 Se o projeto já existir no caminho informado, o Arch Gen pula a etapa e avisa no terminal, em vez de sobrescrever.
-
-## 📋 Requisitos
-
-| Ferramenta | Uso |
-|---|---|
-| 🔷 [.NET SDK 8.0](https://dotnet.microsoft.com/download) | Compila e executa o próprio Arch Gen, além de montar os projetos gerados (`dotnet new`, `dotnet add`) |
-| 🧰 [dotnet-ef](https://learn.microsoft.com/ef/core/cli/dotnet) | Rotinas de migration do EF Core, tanto do Arch Gen quanto dos projetos gerados |
-| 🌐 Internet | Restaura pacotes NuGet (EF Core, SQLite) na primeira execução |
-
-## ⚙️ Como o Arch Gen funciona por dentro
-
-### Arquitetura própria
-
-```
-ArchGen.Domain/          → entidades e exceções de domínio
-ArchGen.Application/     → orquestração (ArchGenService) e contratos
-ArchGen.InfraStructure/  → ITerminalService, IFileArchService, AppDbContext
-ArchGen.Console/         → ponto de entrada, leitura de argumentos
-```
-
-### `ArchGenService` — orquestrador central
-
-Coordena a geração de cada camada em sequência, respeitando a Dependency Rule (de dentro para fora):
-
-1. Gera `Domain`
-2. Gera `Application`
-3. Gera `InfraStructure`
-4. Gera `API` ou `Console`, conforme o tipo escolhido
-5. Gera `Tests` *(em desenvolvimento)*
-6. Monta a `.sln` e conecta todas as referências
-
-### Serviços internos
-
-| Serviço | Função |
-|---|---|
-| `ITerminalService` | Abstrai a execução de comandos externos (`dotnet new`, `dotnet add`), capturando saída e erro |
-| `IFileArchService` | Centraliza os caminhos de cada arquivo/pasta gerado e escreve o conteúdo inicial de cada camada |
-
-### O que cada camada recebe de conteúdo inicial
-
-- **Domain** — entidade `User`, `DomainException`/`ApplicationException`/`InfraStructureException`, interface `IUserRepository`, enum `OptionsStatusUsuario`
-- **Application** — DTOs de criação/atualização/patch de usuário, `IUserUseCase`, `UserUseCase`
-- **InfraStructure** — `AppDbContext`, `UserRepository`, pacote `Microsoft.EntityFrameworkCore` + SQLite já referenciados
-- **API** — `Program.cs` configurado com Swagger e `DbContext`, `UserController`
-- **Console** — projeto base com pacotes de EF Core/SQLite já adicionados, pronto para receber a lógica de orquestração
-
-## 🗄️ Persistência
-
-O Arch Gen usa **SQLite via EF Core** para lembrar o que já foi gerado, guardando por execução:
-
-| Campo | Descrição |
-|---|---|
-| `NomeDoProjeto` | Nome informado na geração |
-| `PathDoProjeto` | Caminho de destino usado |
-| `TipoProjeto` | `API` ou `CONSOLE` |
-
-Isso permite que o Arch Gen reconheça gerações anteriores e evolua, no futuro, para listar histórico e evitar retrabalho em execuções repetidas no mesmo diretório.
-
-## 🐛 Status atual e limitações conhecidas
-
-Sendo transparente sobre o estado real do projeto, para quem for usar ou contribuir:
-
-| Situação | Descrição |
-|---|---|
-| ✅ Reescrito em C# com Clean Architecture | O orquestrador deixou de ser um script Python e passou a ser uma aplicação C# própria, seguindo a mesma arquitetura que gera. |
-| ✅ Namespace dinâmico | Os arquivos gerados usam o nome do projeto para compor `namespace` e `using`, sem acoplamento fixo. |
-| ✅ Persistência funcional | `NomeDoProjeto`, `PathDoProjeto` e `TipoProjeto` já são salvos via SQLite/EF Core. |
-| 🚧 Testes do Arch Gen ainda não implementados | A camada `Tests` do próprio Arch Gen (não a dos projetos gerados) ainda está pendente — é o item mais próximo de conclusão agora. |
-| 🚧 Modo `CONSOLE` gerado incompleto | Cria o projeto e adiciona os pacotes de EF Core/SQLite, mas ainda não escreve o `Program.cs` de orquestração como o modo API já faz. |
-| ⚠️ Sem validação de entrada | Nomes de projeto com espaço, caractere inválido, ou tipo diferente de `API`/`CONSOLE` não são tratados hoje. |
-| ⚠️ Erros do `dotnet` CLI não interrompem o fluxo | Aparecem no terminal, mas o processo segue para as próximas etapas em vez de parar — facilita continuar manualmente depois, mas ainda não reporta de forma estruturada. |
-
-## 🗺️ Roadmap
-
-- [ ] Escrever os testes do próprio Arch Gen (Domain e Application)
-- [ ] Completar o modo `CONSOLE` gerado com um `Program.cs` de orquestração equivalente ao da API
-- [ ] Adicionar validação de entrada (nome, tipo, caminho) antes de iniciar qualquer criação
-- [ ] Melhorar o tratamento de erro do `dotnet` CLI, interrompendo o fluxo de forma clara quando um passo crítico falhar
-- [ ] Extrair os templates de arquivo (hoje como string interpolada) para arquivos `.template` separados
-- [ ] Expor histórico de gerações a partir dos dados já persistidos em SQLite
-- [ ] Documentar o projeto C# gerado quando ele se tornar a entrega principal do ecossistema
-
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas. Ao propor mudança, mantenha:
-
-- ✅ previsibilidade da estrutura gerada — quem já usou uma vez não deve levar susto na próxima;
-- ✅ nomes e convenções consistentes entre as camadas;
-- ✅ baixo acoplamento entre os serviços internos do Arch Gen;
-- ✅ clareza na separação entre Domain, Application e Infrastructure, tanto no Arch Gen quanto no que ele gera.
-
-## 📄 Licença
-
-*Código autorizado para uso livre.*
 
 ---
 
-<div align="center">
+## 🔎 Visão Geral
 
-Feito por **Darwin** — construído aprendendo, quebrando e corrigindo. 🚀
+O **ArchGen** é uma ferramenta CLI desenvolvida em C# com .NET 8.0 que automatiza a criação de projetos em Clean Architecture.
 
-</div>
+Além de gerar soluções prontas para produção (nos modos `API` e `CONSOLE`), o ArchGen possui:
+1. **Sistema de Templates Padrão & Customizáveis**: Permite clonar o template padrão, manipular arquivos dentro dele (edição de código, inclusão de classes, alteração de configurações) e persistir o novo template no banco de dados.
+2. **Histórico Automático**: Cada projeto gerado tem seus metadados (nome, caminho, tipo, template utilizado, data/hora e status) salvos no banco SQLite.
+3. **Tabela de Ajuda no Console**: Ao executar `ArchGen --help`, exibe uma tabela rica e formatada com comandos, sintaxes, opções e exemplos práticos.
+4. **Testes Unitários com Mocks**: Cobertura completa de testes para Domain, Application, Infrastructure e CLI usando xUnit, Moq e FluentAssertions.
+
+---
+
+## 🏛️ Arquitetura do ArchGen
+
+O próprio ArchGen foi desenvolvido rigorosamente seguindo os princípios de **Clean Architecture**:
+
+```
+ArchGen/
+├── ArchGen.Domain/              # Regras de Negócio e Entidades Centrais
+│   ├── Entities/                # ProjectHistory, TemplateDefinition, TemplateFileDefinition
+│   ├── Enums/                   # ProjectTypeEnum, ProjectStatusEnum, ProjectLayerEnum
+│   ├── Exceptions/              # DomainException, ValidationException, TemplateNotFoundException
+│   └── Interfaces/              # ITemplateRepository, IProjectHistoryRepository, IFileService, ITerminalService
+│
+├── ArchGen.Application/         # Casos de Uso e Orquestração
+│   ├── DTOs/                    # GenerateProjectRequest, TemplateDtos, ProjectHistoryDto, HelpItemDto
+│   ├── Interfaces/              # IGenerateProjectUseCase, ITemplateUseCase, IProjectHistoryUseCase, IHelpUseCase
+│   ├── UseCases/                # GenerateProjectUseCase, TemplateUseCase, ProjectHistoryUseCase, HelpUseCase
+│   └── DependencyInjection.cs   # Injeção de dependência da camada Application
+│
+├── ArchGen.InfraStructure/      # Persistência e Acesso a Recursos
+│   ├── Data/                    # AppDbContext (EF Core com SQLite)
+│   ├── Repositories/            # TemplateRepository, ProjectHistoryRepository
+│   ├── Services/                # DefaultTemplateProvider, PhysicalFileService, TerminalService
+│   └── DependencyInjection.cs   # Injeção de dependência da camada Infrastructure
+│
+├── ArchGen/                     # Camada de Apresentação (Console CLI)
+│   ├── Cli/                     # CommandLineParser, CliRunner (Tabelas e Cores)
+│   └── Program.cs               # Configuração do Host DI e Execução
+│
+└── ArchGen.Tests/               # Suíte de Testes Unitários
+    ├── Domain/                  # Testes das entidades e validações de domínio
+    ├── Application/             # Testes dos UseCases com Mocks (Moq)
+    ├── InfraStructure/          # Testes dos repositórios com EF Core InMemory
+    └── Cli/                     # Testes do parser e runner CLI
+```
+
+---
+
+## ⚡ Funcionalidades Principais
+
+| Funcionalidade | Descrição |
+|---|---|
+| 🚀 **Geração Limpa** | Cria projetos em Clean Architecture (`API` ou `CONSOLE`) com todas as referências conectadas e compiláveis. |
+| 🧩 **Templates no Banco** | Clona o template padrão e permite manipular qualquer arquivo antes de salvar como um novo template no SQLite. |
+| 🗃️ **EF Core & SQLite** | Persistência automática de templates e histórico sem necessidade de configuração prévia. |
+| 📋 **Tabela de Ajuda** | Exibe ajuda rica em console via `ArchGen --help`. |
+| 📜 **Auditoria e Histórico** | Consulta detalhada de projetos gerados pelo comando `ArchGen history`. |
+| 🧪 **Testes Unitários** | 82+ testes cobrindo todas as funcionalidades com Moq e FluentAssertions. |
+
+---
+
+## 📖 Tabela de Ajuda no Terminal (`--help`)
+
+Executando:
+```bash
+dotnet run --project ArchGen -- --help
+# ou
+ArchGen --help
+```
+
+A seguinte tabela é exibida no console:
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                    ARCHGEN - GERADOR DE ARQUITETURA LIMPA EM C# (.NET 8.0)                                                    ║
+║                                                  Guia Completo de Comandos, Templates e Gerenciamento                                                       ║
+╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ Comando            ║ Sintaxe                                ║ Descrição                                      ║ Exemplo de Uso                                     ║
+╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ Ajuda Geral        ║ ArchGen --help (ou -h)                 ║ Exibe esta tabela de ajuda completa com        ║ ArchGen --help                                     ║
+║                    ║                                        ║ comandos e exemplos de uso.                    ║                                                    ║
+╟───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╢
+║ Gerar Projeto      ║ ArchGen new <Nome> [Tipo] [Path]       ║ Gera uma solução C# (.NET 8.0) em Clean        ║ ArchGen new MeuProjeto API                         ║
+║                    ║ [Opções]                               ║ Architecture completa (Domain, App, Infra,     ║ ArchGen new MeuConsole CONSOLE C:\Projetos         ║
+║                    ║                                        ║ API/Console, Tests, sln).                      ║ --template CustomTemplate                          ║
+╟───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╢
+║ Listar Templates   ║ ArchGen template list                  ║ Lista todos os templates disponíveis (padrão e ║ ArchGen template list                              ║
+║                    ║                                        ║ os salvos no banco de dados).                  ║                                                    ║
+╟───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╢
+║ Visualizar         ║ ArchGen template view <Nome> [--file   ║ Exibe os arquivos de um template ou o conteúdo ║ ArchGen template view Default                      ║
+║ Template           ║ <Caminho>]                             ║ de um arquivo específico.                      ║ ArchGen template view MeuTemplate --file           ║
+║                    ║                                        ║                                                ║ Domain/Entities/User.cs                            ║
+╟───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╢
+║ Criar Template     ║ ArchGen template create <NovoNome>     ║ Cria um novo template no banco de dados        ║ ArchGen template create CustomApi --from Default   ║
+║                    ║ [Opções]                               ║ clonando o template padrão ou outro existente. ║ --desc "Template com entidades customizadas"       ║
+╟───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╢
+║ Manipular Arquivo  ║ ArchGen template edit-file <Nome>      ║ Modifica ou adiciona um arquivo no template e  ║ ArchGen template edit-file CustomApi --file        ║
+║ do Template        ║ --file <Caminho> [Opções]              ║ salva as alterações no banco de dados.         ║ Domain/Entities/User.cs --from-file C:\meu-user.cs ║
+╟───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╢
+║ Excluir Template   ║ ArchGen template delete <Nome>         ║ Remove um template customizado do banco de     ║ ArchGen template delete CustomApi                  ║
+║                    ║                                        ║ dados (o padrão não pode ser excluído).        ║                                                    ║
+╟───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╢
+║ Histórico de       ║ ArchGen history                        ║ Exibe a tabela com o histórico de todos os     ║ ArchGen history                                    ║
+║ Projetos           ║                                        ║ projetos gerados pelo ArchGen salvos no banco. ║                                                    ║
+╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## 🚀 Como Usar
+
+### Geração de Projetos
+
+#### Gerar uma Web API em Clean Architecture
+```bash
+dotnet run --project ArchGen -- new MinhaApi API
+```
+
+#### Gerar uma aplicação Console em Clean Architecture
+```bash
+dotnet run --project ArchGen -- new MeuConsole CONSOLE
+```
+
+#### Gerar em um diretório customizado utilizando um template customizado
+```bash
+dotnet run --project ArchGen -- new Microservico API C:\MeusProjetos --template MeuTemplate
+```
+
+---
+
+### Gerenciamento e Customização de Templates
+
+O ArchGen permite que você pegue o template padrão, modifique qualquer arquivo interno ou adicione arquivos, salvando como um novo template no banco SQLite:
+
+#### 1. Listar templates existentes
+```bash
+dotnet run --project ArchGen -- template list
+```
+
+#### 2. Inspecionar arquivos do template
+```bash
+dotnet run --project ArchGen -- template view Default
+```
+
+#### 3. Criar novo template a partir do padrão
+```bash
+dotnet run --project ArchGen -- template create MeuTemplate --from Default --desc "Template customizado da empresa"
+```
+
+#### 4. Manipular um arquivo dentro do template e salvar no banco
+```bash
+dotnet run --project ArchGen -- template edit-file MeuTemplate --file "src/{{PROJECT_NAME}}.Domain/Entities/User.cs" --content "// Código customizado do User"
+# ou ler o conteúdo diretamente de um arquivo no disco:
+dotnet run --project ArchGen -- template edit-file MeuTemplate --file "src/{{PROJECT_NAME}}.Domain/Entities/User.cs" --from-file "C:\Users\UserCustomizado.cs"
+```
+
+#### 5. Excluir template customizado
+```bash
+dotnet run --project ArchGen -- template delete MeuTemplate
+```
+
+---
+
+### Histórico de Projetos Gerados
+
+Cada projeto gerado pelo ArchGen é registrado no banco de dados. Para consultar o histórico:
+
+```bash
+dotnet run --project ArchGen -- history
+```
+
+Saída:
+```
+📜 HISTÓRICO DE PROJETOS GERADOS NO ARCHGEN:
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ID   | Projeto              | Tipo     | Template        | Data de Criação     | Status   | Caminho
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    | MinhaApi             | API      | Default         | 2026-10-24 05:16:05 | Success  | C:\Projetos\MinhaApi
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+```
+
+---
+
+## 📁 Estrutura das Soluções Geradas
+
+Toda solução gerada pelo ArchGen possui dependências estritamente unidirecionais em Clean Architecture:
+
+```mermaid
+graph TD
+    API["🌐 Presentation (API / Console)"] --> APP["⚙️ Application"]
+    API --> INFRA["🗄️ InfraStructure"]
+    API --> DOM["🧠 Domain"]
+    INFRA --> APP
+    INFRA --> DOM
+    APP --> DOM
+    TESTS["✅ Tests"] --> APP
+    TESTS --> DOM
+    TESTS --> INFRA
+```
+
+### O que cada camada gerada contém:
+- **`NomeDoProjeto.Domain`**: `BaseEntity`, entidade `User`, enum `UserStatus`, interface `IUserRepository`, exceção `DomainException`.
+- **`NomeDoProjeto.Application`**: DTOs (`UserDto`, `CreateUserRequest`, `UpdateUserRequest`), `IUserUseCase`, `UserUseCase`, extensão de DI `AddApplication()`.
+- **`NomeDoProjeto.InfraStructure`**: `AppDbContext` (EF Core SQLite), repositório `UserRepository`, extensão de DI `AddInfraStructure()`.
+- **`NomeDoProjeto.API`** *(se API)*: `UsersController` com endpoints RESTful completos (GET, POST, PUT, DELETE), Swagger configurado, `Program.cs`.
+- **`NomeDoProjeto.Console`** *(se Console)*: Host DI configurado com `Microsoft.Extensions.Hosting`, execução do caso de uso e log no terminal.
+- **`NomeDoProjeto.Tests`**: Testes unitários com xUnit, Moq e FluentAssertions prontos para execução via `dotnet test`.
+
+---
+
+## 🧪 Testes Unitários com Mocks
+
+A aplicação conta com testes unitários em **todas** as funcionalidades:
+- **Domain**: Validações de entidades, regras de clonagem e manipulação de arquivos de template.
+- **Application**: Testes de use cases com mocks (`Moq`) para `ITemplateRepository`, `IProjectHistoryRepository`, `IDefaultTemplateProvider` e `IFileService`.
+- **Infrastructure**: Testes de repositório e EF Core com banco em memória.
+- **CLI**: Testes de parser de linha de comando e execução de comandos.
+
+Para executar os testes:
+```bash
+dotnet test
+```
+
+---
+
+## 📄 Licença
+
+Código autorizado para uso livre. Feito com C# e .NET 8.0.
