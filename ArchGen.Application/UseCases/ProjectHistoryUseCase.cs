@@ -1,5 +1,6 @@
 using ArchGen.Application.DTOs;
 using ArchGen.Application.Interfaces;
+using ArchGen.Domain.Entities;
 using ArchGen.Domain.Interfaces;
 
 namespace ArchGen.Application.UseCases;
@@ -12,7 +13,7 @@ public class ProjectHistoryUseCase : IProjectHistoryUseCase
     {
         _historyRepository = historyRepository;
     }
-
+    
     public async Task<List<ProjectHistoryDto>> GetAllHistoryAsync(CancellationToken ct = default)
     {
         var list = await _historyRepository.GetAllAsync(ct);
@@ -29,7 +30,7 @@ public class ProjectHistoryUseCase : IProjectHistoryUseCase
         }).OrderByDescending(h => h.CreatedAt).ToList();
     }
 
-    public async Task<ProjectHistoryDto?> GetHistoryByIdAsync(int id, CancellationToken ct = default)
+    public async Task<ProjectHistoryDto?> GetHistoryByIdAsync(Guid id, CancellationToken ct = default)
     {
         var h = await _historyRepository.GetByIdAsync(id, ct);
         if (h == null) return null;

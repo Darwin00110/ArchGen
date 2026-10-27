@@ -118,7 +118,7 @@ public class CliRunner
         PrintColored($"🏗️  Iniciando geração de solução Clean Architecture '{projectName}' ({projectType})...", ConsoleColor.Cyan);
         Console.WriteLine($"   Template: {templateName}");
         Console.WriteLine($"   Destino:  {(string.IsNullOrWhiteSpace(targetPath) ? _fileService.GetCurrentDirectory() : targetPath)}");
-
+        
         var request = new GenerateProjectRequest
         {
             ProjectName = projectName,
@@ -154,7 +154,6 @@ public class CliRunner
             {
                 Console.WriteLine($"   dotnet run --project src/{projectName}.Console");
             }
-
             return 0;
         }
         else

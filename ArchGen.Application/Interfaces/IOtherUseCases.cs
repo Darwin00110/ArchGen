@@ -5,7 +5,7 @@ namespace ArchGen.Application.Interfaces;
 public interface IProjectHistoryUseCase
 {
     Task<List<ProjectHistoryDto>> GetAllHistoryAsync(CancellationToken ct = default);
-    Task<ProjectHistoryDto?> GetHistoryByIdAsync(int id, CancellationToken ct = default);
+    Task<ProjectHistoryDto?> GetHistoryByIdAsync(Guid id, CancellationToken ct = default);
 }
 
 public interface IHelpUseCase

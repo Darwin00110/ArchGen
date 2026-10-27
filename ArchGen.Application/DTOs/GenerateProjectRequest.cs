@@ -6,4 +6,5 @@ public class GenerateProjectRequest
     public string? TargetPath { get; set; }
     public string ProjectType { get; set; } = "API";
     public string? TemplateName { get; set; }
+    public string? Description {get; set;}
 }

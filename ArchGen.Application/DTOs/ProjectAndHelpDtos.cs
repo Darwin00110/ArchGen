@@ -2,7 +2,7 @@ namespace ArchGen.Application.DTOs;
 
 public class ProjectHistoryDto
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string ProjectName { get; set; } = string.Empty;
     public string ProjectPath { get; set; } = string.Empty;
     public string ProjectType { get; set; } = string.Empty;

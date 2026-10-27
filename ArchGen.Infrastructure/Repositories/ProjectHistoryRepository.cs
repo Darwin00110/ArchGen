@@ -26,8 +26,14 @@ public class ProjectHistoryRepository : IProjectHistoryRepository
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync(ct);
     }
-
-    public async Task<ProjectHistory?> GetByIdAsync(int id, CancellationToken ct = default)
+    public async Task<bool> Verify_ProjectExists(string NameProject)
+    {
+        var query = await _context.ProjectHistories.Where(x => x.ProjectName == NameProject).FirstOrDefaultAsync();
+        if(query == null)
+            return false;
+        return true;
+    }
+    public async Task<ProjectHistory?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         return await _context.ProjectHistories.FirstOrDefaultAsync(h => h.Id == id, ct);
     }
